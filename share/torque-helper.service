@@ -5,7 +5,7 @@ After=pbs_server.service moab.service network.target rsyslog.target local-fs.tar
 [Service]
 Type=simple
 User=root
-ExecStart=/var/spool/torque-helper/sbin/torque-helper -h 0.0.0.0 -p 60209
+ExecStart=/usr/sbin/torque-helper -h 0.0.0.0 -p 60209
 StandardOutput=null
 Restart=on-failure
 

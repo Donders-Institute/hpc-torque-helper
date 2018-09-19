@@ -22,12 +22,14 @@ A helper server for retrieving torque/moab job information with leveraged privil
 make
 
 %install
-mkdir -p %{buildroot}/%{_bindir}
-install -m 755 bin/%{name} %{buildroot}/%{_bindir}/%{name}
-install -m 644 share/%{name}.service /run/systemd/system/%{name}.service
+mkdir -p %{buildroot}/%{_sbindir}
+mkdir -p %{buildroot}/run/systemd/system
+install -m 755 bin/%{name} %{buildroot}/%{_sbindir}/%{name}
+install -m 644 share/%{name}.service %{buildroot}/run/systemd/system/%{name}.service
 
 %files
-%{_bindir}/%{name}
+%{_sbindir}/%{name}
+/run/systemd/system/%{name}.service
 
 %changelog
 * Wed Sep 19 2018 Hong Lee <h.lee@donders.ru.nl> - 0.1-1
