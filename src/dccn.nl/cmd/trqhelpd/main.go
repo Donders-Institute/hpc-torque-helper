@@ -28,8 +28,8 @@ func init() {
 
 	connHost = flag.String("h", "0.0.0.0", "set the ip `address` of the server")
 	connPort = flag.Int("p", 60209, "set the port `number` of the server")
-	tlsCert = flag.String("cert", "/etc/pki/tls/private/torque-helper.pem", "set the `path` of the TLS certificate")
-	tlsKey = flag.String("key", "/etc/pki/tls/private/torque-helper.key", "set the `path` of the TLS private key")
+	tlsCert = flag.String("cert", "/etc/pki/tls/private/server.pem", "set the `path` of the TLS certificate")
+	tlsKey = flag.String("key", "/etc/pki/tls/private/server.key", "set the `path` of the TLS private key")
 	optsVerbose = flag.Bool("v", false, "print debug messages")
 
 	flag.Usage = usage
