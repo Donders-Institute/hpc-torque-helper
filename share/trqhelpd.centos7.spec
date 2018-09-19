@@ -2,13 +2,13 @@
 # rpmbuild -bb
 %define debug_package %{nil}
 
-Name:       torque-helper
+Name:       trqhelpd
 Version:    0.1
 Release:    1%{?dist}
 Summary:    A helper server for Torque/Moab
 License:    FIXME
-URL: https://github.com/Donders-Institute/%{name}
-Source0: https://github.com/Donders-Institute/%{name}/archive/%{version}.tar.gz
+URL: https://github.com/Donders-Institute/torque-helper
+Source0: https://github.com/Donders-Institute/torque-helper/archive/%{version}.tar.gz
 
 BuildArch: x86_64
 
@@ -25,7 +25,7 @@ make
 mkdir -p %{buildroot}/%{_sbindir}
 mkdir -p %{buildroot}/run/systemd/system
 install -m 755 bin/%{name} %{buildroot}/%{_sbindir}/%{name}
-install -m 644 share/trqhelpd.service %{buildroot}/usr/lib/systemd/system/trqhelpd.service
+install -m 644 share/%{name}.service %{buildroot}/usr/lib/systemd/system/%{name}.service
 
 %files
 %{_sbindir}/%{name}

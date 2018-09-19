@@ -1,11 +1,11 @@
 [Unit]
-Description=Torque Helper
+Description=Torque Helper Service
 After=pbs_server.service moab.service network.target rsyslog.target local-fs.target
 
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/sbin/torque-helper -h 0.0.0.0 -p 60209
+ExecStart=/usr/sbin/trqhelpd -h 0.0.0.0 -p 60209
 StandardOutput=null
 Restart=on-failure
 
