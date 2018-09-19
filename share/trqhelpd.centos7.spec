@@ -23,7 +23,7 @@ make
 
 %install
 mkdir -p %{buildroot}/%{_sbindir}
-mkdir -p %{buildroot}/run/systemd/system
+mkdir -p %{buildroot}/usr/lib/systemd/system
 install -m 755 bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd
 install -m 644 share/trqhelpd.service %{buildroot}/usr/lib/systemd/system/trqhelpd.service
 
