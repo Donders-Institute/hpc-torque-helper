@@ -1,0 +1,13 @@
+[Unit]
+Description=Torque Helper
+After=pbs_server.service moab.service network.target rsyslog.target local-fs.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/var/spool/torque-helper/sbin/torque-helper -h 0.0.0.0 -p 60209
+StandardOutput=null
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

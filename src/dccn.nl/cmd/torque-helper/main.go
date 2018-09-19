@@ -8,7 +8,10 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"os/user"
 	"regexp"
+	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -97,6 +100,9 @@ func handleRequest(conn net.Conn) {
 		log.Info(caddr, " disconnected")
 	}()
 
+	// Set read timeout to 5 seconds from now
+	conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+
 	// TODO: Check if client address is allowed to perform request.
 
 	// Make a buffer to hold incoming data.
@@ -105,22 +111,61 @@ func handleRequest(conn net.Conn) {
 	reqLen, err := conn.Read(buf)
 	if err != nil {
 		log.Error("Error reading: ", err.Error())
-	}
-	id := string(buf[:reqLen])
-	// Check if the id is a digit number
-	if match, _ := regexp.MatchString("([0-9]+)", id); !match {
-		conn.Write([]byte("Job id must be a digital number: " + id))
+		conn.Write([]byte("Error reading: " + err.Error()))
 		return
 	}
-	cmd := exec.Command("checkjob", "--xml", id)
+	input := string(buf[:reqLen])
+
+	// Split input to get command data, as we expect command and arguments
+	// are separated by 4 '+' characters.
+	data := strings.Split(input, "++++")
+	var cmdName string
+	var cmdArgs []string
+	switch data[0] {
+	case "checkBlockedJob":
+		// Check if the id is a digit number
+		if match, _ := regexp.MatchString("([0-9]+)", data[1]); !match {
+			conn.Write([]byte("Invalid job id: " + data[1]))
+			return
+		}
+		cmdName = "checkjob"
+		cmdArgs = []string{"--xml", data[1]}
+	case "getBlockedJobsOfUser":
+		// TODO: Check if the uid is a valid user
+		if _, err := user.Lookup(data[1]); err != nil {
+			conn.Write([]byte("Invalid username: " + data[1]))
+			return
+		}
+		cmdName = "showq"
+		cmdArgs = []string{"-b", "--xml", "-w", "user=" + data[1]}
+	default:
+		conn.Write([]byte("Command not found: " + data[0]))
+		return
+	}
+
+	// Execute command and send a command output directly back to the connector.
+	cmd := exec.Command(cmdName, cmdArgs...)
 	cmd.Env = []string{
 		"PATH=/opt/cluster/bin:$PATH",
 		"MOABHOMEDIR=/opt/cluster/external/moab",
 	}
-	// Send a command output directly back to the connector.
 	cmd.Stdout = conn
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
+		conn.Write([]byte("Error checkjob: " + err.Error()))
+		return
 	}
+}
+
+// ConnWriter modifies commandline output before writing to socket connection.
+type ConnWriter struct {
+	Conn net.Conn
+}
+
+func (c ConnWriter) Write(p []byte) (n int, err error) {
+	if len(p) > 0 && p[0] == '\n' {
+		return c.Conn.Write(p[1:])
+	}
+	return c.Conn.Write(p)
 }
