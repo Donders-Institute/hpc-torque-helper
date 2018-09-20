@@ -109,32 +109,29 @@ func handleRequest(conn net.Conn) {
 		log.Info(caddr, " disconnected")
 	}()
 
-	// Set read timeout to 5 seconds from now
+	// Set read timeout to 1 seconds from now
 	conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 
 	// TODO: Check if client address is allowed to perform request.
 
-	// Make a buffer to hold incoming data.
-	buf := bufio.NewReader(conn)
+	// Here is the protocol:
+	// - each command starts with a command name followed by multiple command arguments
+	// - command name and arguments are separated by string "++++"
+	// - commands are concatenated by character '\n'
+	// - connection is terminiated when receiving the command "bye"
+	//
+	// Example:
+	//
+	// "clusterQstat\ngetBlockedJobsOfUser++++honlee\nbye"
+	//
+	s := bufio.NewScanner(conn)
 
-	for {
-		// Read the incoming message until the first '\n'.
-		msg, err := buf.ReadString('\n')
-		if err != nil {
-			log.Error("Error reading: ", err.Error())
-			conn.Write([]byte("Error reading: " + err.Error()))
-			return
-		}
-		// Leave loop when the message received is 'bye'
-		if msg == "bye" {
-			break
-		}
-		// Switch to right command based on client input
-		cmdName, cmdArgs, err := switchCommand(msg)
+	for s.Scan() {
+		cmdName, cmdArgs, err := switchCommand(s.Text())
 		if err != nil {
 			log.Error(err)
 			conn.Write([]byte(err.Error()))
-			return
+			break
 		}
 		// Execute command and send a command output directly back to the connector.
 		cmd := exec.Command(cmdName, cmdArgs...)
@@ -150,8 +147,12 @@ func handleRequest(conn net.Conn) {
 		if err := cmd.Run(); err != nil {
 			log.Error(err)
 			conn.Write([]byte("Error checkjob: " + err.Error()))
-			return
+			break
 		}
+	}
+	if err := s.Err(); err != nil {
+		log.Error(err)
+		conn.Write([]byte("Error read input: " + err.Error()))
 	}
 }
 
