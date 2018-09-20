@@ -119,7 +119,7 @@ func handleRequest(conn net.Conn) {
 
 	for {
 		// Read the incoming message until the first '\n'.
-		msg, err := r.ReadString('\n')
+		msg, err := buf.ReadString('\n')
 		if err != nil {
 			log.Error("Error reading: ", err.Error())
 			conn.Write([]byte("Error reading: " + err.Error()))
@@ -130,7 +130,7 @@ func handleRequest(conn net.Conn) {
 			break
 		}
 		// Switch to right command based on client input
-		cmdName, cmdArgs, err := switchCommand(msg))
+		cmdName, cmdArgs, err := switchCommand(msg)
 		if err != nil {
 			log.Error(err)
 			conn.Write([]byte(err.Error()))
