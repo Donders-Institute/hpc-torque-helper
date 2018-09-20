@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"bufio"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -114,38 +115,43 @@ func handleRequest(conn net.Conn) {
 	// TODO: Check if client address is allowed to perform request.
 
 	// Make a buffer to hold incoming data.
-	buf := make([]byte, 1024)
-	// Read the incoming connection into the buffer.
-	reqLen, err := conn.Read(buf)
-	if err != nil {
-		log.Error("Error reading: ", err.Error())
-		conn.Write([]byte("Error reading: " + err.Error()))
-		return
-	}
+	buf := bufio.NewReader(conn)
 
-	// Switch to right command based on client input
-	cmdName, cmdArgs, err := switchCommand(string(buf[:reqLen]))
-	if err != nil {
-		log.Error(err)
-		conn.Write([]byte(err.Error()))
-		return
-	}
-
-	// Execute command and send a command output directly back to the connector.
-	cmd := exec.Command(cmdName, cmdArgs...)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("PATH=%s/bin:%s/bin:$PATH", *tdir, *mdir))
-	if *tdir != "" {
-		cmd.Env = append(cmd.Env, "TORQUEHOME="+*tdir)
-	}
-	if *mdir != "" {
-		cmd.Env = append(cmd.Env, "MOABHOMEDIR="+*mdir)
-	}
-	cmd.Stdout = conn
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-		conn.Write([]byte("Error checkjob: " + err.Error()))
-		return
+	for {
+		// Read the incoming message until the first '\n'.
+		msg, err := r.ReadString('\n')
+		if err != nil {
+			log.Error("Error reading: ", err.Error())
+			conn.Write([]byte("Error reading: " + err.Error()))
+			return
+		}
+		// Leave loop when the message received is 'bye'
+		if msg == "bye" {
+			break
+		}
+		// Switch to right command based on client input
+		cmdName, cmdArgs, err := switchCommand(msg))
+		if err != nil {
+			log.Error(err)
+			conn.Write([]byte(err.Error()))
+			return
+		}
+		// Execute command and send a command output directly back to the connector.
+		cmd := exec.Command(cmdName, cmdArgs...)
+		cmd.Env = append(os.Environ(), fmt.Sprintf("PATH=%s/bin:%s/bin:$PATH", *tdir, *mdir))
+		if *tdir != "" {
+			cmd.Env = append(cmd.Env, "TORQUEHOME="+*tdir)
+		}
+		if *mdir != "" {
+			cmd.Env = append(cmd.Env, "MOABHOMEDIR="+*mdir)
+		}
+		cmd.Stdout = conn
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+			conn.Write([]byte("Error checkjob: " + err.Error()))
+			return
+		}
 	}
 }
 
