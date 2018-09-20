@@ -5,6 +5,7 @@ After=pbs_server.service moab.service network.target rsyslog.target local-fs.tar
 [Service]
 Type=simple
 User=root
+EnvironmentFile=-/etc/sysconfig/trqhelpd
 ExecStart=/usr/sbin/trqhelpd -h 0.0.0.0 -p 60209
 StandardOutput=syslog
 Restart=no

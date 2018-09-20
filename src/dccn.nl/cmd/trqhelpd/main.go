@@ -3,12 +3,14 @@ package main
 import (
 	"crypto/rand"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"os/user"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -21,17 +23,21 @@ var (
 	connPort    *int
 	tlsCert     *string
 	tlsKey      *string
+	mdir        *string
+	tdir        *string
 	optsVerbose *bool
 )
 
 func init() {
 
+	// Command-line arguments
 	connHost = flag.String("h", "0.0.0.0", "set the ip `address` of the server")
 	connPort = flag.Int("p", 60209, "set the port `number` of the server")
-	tlsCert = flag.String("cert", "/etc/pki/tls/private/server.pem", "set the `path` of the TLS certificate")
-	tlsKey = flag.String("key", "/etc/pki/tls/private/server.key", "set the `path` of the TLS private key")
+	mdir = flag.String("m", os.Getenv("MOABHOMEDIR"), "set the `path` of Moab installation, usually referred by $MOABHOMEDIR")
+	tdir = flag.String("t", os.Getenv("TORQUEHOME"), "set the `path` of the Torque installation")
+	tlsCert = flag.String("c", os.Getenv("TLS_CERT"), "set the `path` of the TLS certificate")
+	tlsKey = flag.String("k", os.Getenv("TLS_KEY"), "set the `path` of the TLS private key")
 	optsVerbose = flag.Bool("v", false, "print debug messages")
-
 	flag.Usage = usage
 
 	flag.Parse()
@@ -57,6 +63,7 @@ func usage() {
 }
 
 func main() {
+
 	// Load server certificate
 	cert, err := tls.LoadX509KeyPair(*tlsCert, *tlsKey)
 
@@ -75,6 +82,7 @@ func main() {
 	}
 	// Close the listener when the application closes.
 	defer l.Close()
+
 	log.Infof("Listening on %s:%d\n", *connHost, *connPort)
 	for {
 		// Listen for an incoming connection.
@@ -114,40 +122,23 @@ func handleRequest(conn net.Conn) {
 		conn.Write([]byte("Error reading: " + err.Error()))
 		return
 	}
-	input := string(buf[:reqLen])
 
-	// Split input to get command data, as we expect command and arguments
-	// are separated by 4 '+' characters.
-	data := strings.Split(input, "++++")
-	var cmdName string
-	var cmdArgs []string
-	switch data[0] {
-	case "checkBlockedJob":
-		// Check if the id is a digit number
-		if match, _ := regexp.MatchString("([0-9]+)", data[1]); !match {
-			conn.Write([]byte("Invalid job id: " + data[1]))
-			return
-		}
-		cmdName = "checkjob"
-		cmdArgs = []string{"--xml", data[1]}
-	case "getBlockedJobsOfUser":
-		// TODO: Check if the uid is a valid user
-		if _, err := user.Lookup(data[1]); err != nil {
-			conn.Write([]byte("Invalid username: " + data[1]))
-			return
-		}
-		cmdName = "showq"
-		cmdArgs = []string{"-b", "--xml", "-w", "user=" + data[1]}
-	default:
-		conn.Write([]byte("Command not found: " + data[0]))
+	// Switch to right command based on client input
+	cmdName, cmdArgs, err := switchCommand(string(buf[:reqLen]))
+	if err != nil {
+		log.Error(err)
+		conn.Write([]byte(err.Error()))
 		return
 	}
 
 	// Execute command and send a command output directly back to the connector.
 	cmd := exec.Command(cmdName, cmdArgs...)
-	cmd.Env = []string{
-		"PATH=/opt/cluster/bin:$PATH",
-		"MOABHOMEDIR=/opt/cluster/external/moab",
+	cmd.Env = append(os.Environ(), fmt.Sprintf("PATH=%s/bin:%s/bin:$PATH", *tdir, *mdir))
+	if *tdir != "" {
+		cmd.Env = append(cmd.Env, "TORQUEHOME="+*tdir)
+	}
+	if *mdir != "" {
+		cmd.Env = append(cmd.Env, "MOABHOMEDIR="+*mdir)
 	}
 	cmd.Stdout = conn
 	cmd.Stderr = os.Stderr
@@ -156,6 +147,54 @@ func handleRequest(conn net.Conn) {
 		conn.Write([]byte("Error checkjob: " + err.Error()))
 		return
 	}
+}
+
+func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
+	// Split input to get command data, as we expect command and arguments
+	// are separated by 4 '+' characters.
+	data := strings.Split(input, "++++")
+	switch data[0] {
+	case "torqueConfig":
+		// Get torque configuration from qmgr
+		cmdName = "qmgr"
+		cmdArgs = []string{"-c", "'print server'"}
+	case "moabConfig":
+		mdir, ok := os.LookupEnv("MOABHOMEDIR")
+		if !ok {
+			mdir = "/usr/local/moab"
+		}
+		// Get moab configuration from moab configuration file
+		cmdName = "cat"
+		cmdArgs = []string{path.Join(mdir, "moab.cfg")}
+	case "clusterQstat":
+		// Get whole cluster qstat
+		cmdName = "qstat"
+		cmdArgs = []string{"-atGn1"}
+	case "clusterFaireshare":
+		// Get cluster fairshare status from the diagnose command of moab
+		cmdName = "diagnose"
+		cmdArgs = []string{"-f"}
+	case "checkBlockedJob":
+		// Check if the id is a digit number
+		if match, _ := regexp.MatchString("([0-9]+)", data[1]); !match {
+			err = errors.New("Invalid job id: " + data[1])
+			return
+		}
+		cmdName = "checkjob"
+		cmdArgs = []string{"--xml", data[1]}
+	case "getBlockedJobsOfUser":
+		// TODO: Check if the uid is a valid user
+		if _, ierr := user.Lookup(data[1]); ierr != nil {
+			err = errors.New("Invalid username: " + data[1])
+			return
+		}
+		cmdName = "showq"
+		cmdArgs = []string{"-b", "--xml", "-w", "user=" + data[1]}
+	default:
+		err = errors.New("Command not found: " + data[0])
+		return
+	}
+	return
 }
 
 // ConnWriter modifies commandline output before writing to socket connection.

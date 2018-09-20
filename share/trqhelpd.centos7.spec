@@ -3,7 +3,7 @@
 %define debug_package %{nil}
 
 Name:       torque-helper
-Version:    0.1
+Version:    0.2
 Release:    1%{?dist}
 Summary:    A helper server for Torque/Moab
 License:    FIXME
@@ -24,13 +24,19 @@ make
 %install
 mkdir -p %{buildroot}/%{_sbindir}
 mkdir -p %{buildroot}/usr/lib/systemd/system
+mkdir -p %{buildroot}/etc/sysconfig
 install -m 755 bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd
 install -m 644 share/trqhelpd.service %{buildroot}/usr/lib/systemd/system/trqhelpd.service
+install -m 644 share/trqhelpd.env %{buildroot}/etc/sysconfig/trqhelpd
 
 %files
 %{_sbindir}/trqhelpd
 /usr/lib/systemd/system/trqhelpd.service
+/etc/sysconfig/trqhelpd
 
 %changelog
+* Thu Sep 20 2018 Hong Lee <h.lee@donders.ru.nl> - 0.2-1
+- introduced environment file in /etc/sysconfig
+- added more commands to the service
 * Wed Sep 19 2018 Hong Lee <h.lee@donders.ru.nl> - 0.1-1
 - implemented the first interface for "checkjob --xml".
