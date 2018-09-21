@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"crypto/rand"
 	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -13,7 +15,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	"bufio"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -119,29 +120,61 @@ func handleRequest(conn net.Conn) {
 		log.Info(caddr, " disconnected")
 	}()
 
-	// Set initial read timeout to 1 seconds from now
-	conn.SetReadDeadline(time.Now().Add(1 * time.Second))
-
 	// TODO: Check if client address is allowed to perform request.
+	r := bufio.NewReader(conn)
 
-	// Here is the protocol:
-	// - each command starts with a command name followed by multiple command arguments
-	// - command name and arguments are separated by string "++++"
-	// - commands are concatenated by character '\n'
-	// - connection is terminiated when receiving the command "bye"
-	//
-	// Example:
-	//
-	// "clusterQstat\ngetBlockedJobsOfUser++++honlee\nbye"
-	//
-	s := bufio.NewScanner(conn)
+	for {
+		// Here is the protocol:
+		// - each command starts with a command name followed by multiple command arguments
+		// - command name and arguments are separated by string "++++"
+		// - commands are concatenated by character '\n'
+		// - connection is terminiated when receiving the command "bye"
+		//
+		// Example: "clusterQstat\ngetBlockedJobsOfUser++++honlee\nbye\n"
+		//
+		// Whenever this for loop should continue for next command, the character '\a' is
+		// send to the client for the next command.
 
-	for s.Scan() {
-		cmdName, cmdArgs, err := switchCommand(s.Text())
+		// Set initial read timeout to 3 seconds from now
+		conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+		m, err := r.ReadString('\n')
+
+		log.Debug("message received: ", m)
+
+		// io.EOF received, it implies that the connection's I/O is closed (e.g. client disconnect).
+		// break the loop to close the connection properly.
+		if err == io.EOF {
+			break
+		}
+
+		// Error reading the command message, skip it and continue with the next command.
 		if err != nil {
 			log.Error(err)
-			conn.Write([]byte(err.Error()))
+			conn.Write([]byte("Error: " + err.Error() + "\n\a"))
+			continue
+		}
+
+		// Command message is read.  Trim the last '\n' character to get the actual command.
+		m = strings.TrimSuffix(m, "\n")
+		if m == "bye" {
 			break
+		}
+
+		// Empty message doesn't make sense, return '\a' to client for the next command.
+		if m == "" {
+			conn.Write([]byte{'\a'})
+			continue
+		}
+
+		// Resolve the actual command name, arguments for making system call.
+		cmdName, cmdArgs, err := switchCommand(m)
+
+		// Cannot resolve the command or the command is invalid.
+		// Notify the client with '\a' for the next command.
+		if err != nil {
+			log.Error(err)
+			conn.Write([]byte("Error: " + err.Error() + "\n\a"))
+			continue
 		}
 
 		// Execute command and send a command output directly back to the connector.
@@ -151,16 +184,13 @@ func handleRequest(conn net.Conn) {
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			log.Error(err)
-			conn.Write([]byte("Error: " + err.Error()))
-			break
+			conn.Write([]byte("Error: " + err.Error() + ": " + cmdName + "\n\a"))
+			continue
 		}
+		cmd.Wait()
 
-		// Set next read timeout to 1 seconds from now
-		conn.SetReadDeadline(time.Now().Add(1 * time.Second))
-	}
-	if err := s.Err(); err != nil {
-		log.Error(err)
-		conn.Write([]byte("Error read input: " + err.Error()))
+		// Notify client with '\a' for the next command.
+		conn.Write([]byte{'\a'})
 	}
 }
 
@@ -206,16 +236,4 @@ func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
 		return
 	}
 	return
-}
-
-// ConnWriter modifies commandline output before writing to socket connection.
-type ConnWriter struct {
-	Conn net.Conn
-}
-
-func (c ConnWriter) Write(p []byte) (n int, err error) {
-	if len(p) > 0 && p[0] == '\n' {
-		return c.Conn.Write(p[1:])
-	}
-	return c.Conn.Write(p)
 }

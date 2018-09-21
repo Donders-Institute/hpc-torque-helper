@@ -46,30 +46,49 @@ func usage() {
 
 func main() {
 	config := tls.Config{}
+
 	conn, err := tls.Dial("tcp", *trqhelpdSrv, &config)
 	if err != nil {
 		log.Fatalf("client: dial: %s", err)
 	}
 	defer conn.Close()
-	log.Println("client: connected to: ", conn.RemoteAddr())
 
-	message := "clusterQstat++++"
-	n, err := io.WriteString(conn, message)
-	if err != nil {
-		log.Fatalf("client: write: %s", err)
-	}
-	log.Printf("client: wrote %q (%d bytes)", message, n)
-
-	reply := make([]byte, 4096)
-
-	for {
-		n, err = conn.Read(reply)
-		fmt.Printf("%s", reply[:n])
-		if err == io.EOF {
-			break
-		}
+	for _, m := range []string{"clusterQstat", "bye"} {
+		_, err := conn.Write(append([]byte(m), '\n'))
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("client: write: %s", err)
+		}
+
+		term := false
+		reply := make([]byte, 4096)
+		for {
+
+			n, err := conn.Read(reply)
+
+			// Error in reading command output or io.EOF
+			if err != nil {
+				if err != io.EOF {
+					log.Error(err)
+				}
+				term = true
+				break
+			}
+
+			// Received '\a' from server indicating the end of the command output
+			if reply[n-1] == '\a' {
+				if n > 0 {
+					fmt.Printf("%s", reply[:n-1])
+				}
+				break
+			}
+
+			// Received a part of the command output
+			fmt.Printf("%s", reply[:n])
+		}
+
+		// stop sending more command if the connection has been terminated.
+		if term {
+			break
 		}
 	}
 }
