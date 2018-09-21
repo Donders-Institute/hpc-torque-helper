@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -63,6 +62,17 @@ func usage() {
 }
 
 func main() {
+
+	// Update PATH environment variable with paths of moab/torque executables.
+	os.Setenv("PATH", fmt.Sprintf("%s/bin:%s/bin:%s", *tdir, *mdir, os.Getenv("PATH")))
+
+	// Update TORQUEHOME and MOABHOMEDIR environment variables with the values set to this program.
+	if *tdir != "" {
+		os.Setenv("TORQUEHOME", *tdir)
+	}
+	if *mdir != "" {
+		os.Setenv("MOABHOMEDIR", *mdir)
+	}
 
 	// Load server certificate
 	cert, err := tls.LoadX509KeyPair(*tlsCert, *tlsKey)
@@ -133,18 +143,12 @@ func handleRequest(conn net.Conn) {
 
 	// Execute command and send a command output directly back to the connector.
 	cmd := exec.Command(cmdName, cmdArgs...)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("PATH=%s/bin:%s/bin:$PATH", *tdir, *mdir))
-	if *tdir != "" {
-		cmd.Env = append(cmd.Env, "TORQUEHOME="+*tdir)
-	}
-	if *mdir != "" {
-		cmd.Env = append(cmd.Env, "MOABHOMEDIR="+*mdir)
-	}
+	cmd.Env = os.Environ()
 	cmd.Stdout = conn
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
-		conn.Write([]byte("Error checkjob: " + err.Error()))
+		conn.Write([]byte("Error: " + err.Error()))
 		return
 	}
 }
@@ -157,19 +161,15 @@ func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
 	case "torqueConfig":
 		// Get torque configuration from qmgr
 		cmdName = "qmgr"
-		cmdArgs = []string{"-c", "'print server'"}
+		cmdArgs = []string{"-c", "print server"}
 	case "moabConfig":
-		mdir, ok := os.LookupEnv("MOABHOMEDIR")
-		if !ok {
-			mdir = "/usr/local/moab"
-		}
 		// Get moab configuration from moab configuration file
 		cmdName = "cat"
-		cmdArgs = []string{path.Join(mdir, "moab.cfg")}
+		cmdArgs = []string{"$MOABHOMEDIR/moab.cfg"}
 	case "clusterQstat":
 		// Get whole cluster qstat
 		cmdName = "qstat"
-		cmdArgs = []string{"-atGn1"}
+		cmdArgs = []string{"-a", "-t", "-G", "-n", "-1"}
 	case "clusterFaireshare":
 		// Get cluster fairshare status from the diagnose command of moab
 		cmdName = "diagnose"
