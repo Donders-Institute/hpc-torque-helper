@@ -13,4 +13,4 @@ The server listen on a TCP socket, and waiting for a client to send in a *comman
 1. Server performs the command (mapped to the system call) on the server side.
 1. Server sends the output to the client, and the character `\a` (ASCII control character 0007) to indicate the end of the output.
 1. Client receives the output until the `\a` character.
-1. Client repeats with the next command or sends `bye\n` to close the connection.
+1. Client repeats with the next command or sends the command `bye\n` to close the connection.
