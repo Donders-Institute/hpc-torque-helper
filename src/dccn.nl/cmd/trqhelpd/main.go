@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"bufio"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -118,38 +119,48 @@ func handleRequest(conn net.Conn) {
 		log.Info(caddr, " disconnected")
 	}()
 
-	// Set read timeout to 5 seconds from now
+	// Set initial read timeout to 1 seconds from now
 	conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 
 	// TODO: Check if client address is allowed to perform request.
 
-	// Make a buffer to hold incoming data.
-	buf := make([]byte, 1024)
-	// Read the incoming connection into the buffer.
-	reqLen, err := conn.Read(buf)
-	if err != nil {
-		log.Error("Error reading: ", err.Error())
-		conn.Write([]byte("Error reading: " + err.Error()))
-		return
-	}
+	// Here is the protocol:
+	// - each command starts with a command name followed by multiple command arguments
+	// - command name and arguments are separated by string "++++"
+	// - commands are concatenated by character '\n'
+	// - connection is terminiated when receiving the command "bye"
+	//
+	// Example:
+	//
+	// "clusterQstat\ngetBlockedJobsOfUser++++honlee\nbye"
+	//
+	s := bufio.NewScanner(conn)
 
-	// Switch to right command based on client input
-	cmdName, cmdArgs, err := switchCommand(string(buf[:reqLen]))
-	if err != nil {
-		log.Error(err)
-		conn.Write([]byte(err.Error()))
-		return
-	}
+	for s.Scan() {
+		cmdName, cmdArgs, err := switchCommand(s.Text())
+		if err != nil {
+			log.Error(err)
+			conn.Write([]byte(err.Error()))
+			break
+		}
 
-	// Execute command and send a command output directly back to the connector.
-	cmd := exec.Command(cmdName, cmdArgs...)
-	cmd.Env = os.Environ()
-	cmd.Stdout = conn
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
+		// Execute command and send a command output directly back to the connector.
+		cmd := exec.Command(cmdName, cmdArgs...)
+		cmd.Env = os.Environ()
+		cmd.Stdout = conn
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+			conn.Write([]byte("Error: " + err.Error()))
+			break
+		}
+
+		// Set next read timeout to 1 seconds from now
+		conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+	}
+	if err := s.Err(); err != nil {
 		log.Error(err)
-		conn.Write([]byte("Error: " + err.Error()))
-		return
+		conn.Write([]byte("Error read input: " + err.Error()))
 	}
 }
 
