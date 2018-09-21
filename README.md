@@ -8,9 +8,9 @@ The server listen on a TCP socket, and waiting for a client to send in a *comman
 
 ## cliet-server communication protocol
 1. Client initiates a TCP socket with TLS.
-1. Client sends a command string to the server in format of `<cmdName>++++<cmdArg1>++++<cmdArg2>` and the character `\n` (ASCII control character 0010) to indicate the end of the command.
+1. Client sends a command string to the server in format of `<cmdName>++++<cmdArg1>++++<cmdArg2>` followed by an ending character `\n` (ASCII control character 0010) to indicate the end of the command.
 1. Server receives the command string until the `\n` character.
 1. Server performs the command (mapped to the system call) on the server side.
 1. Server sends the output to the client, and the character `\a` (ASCII control character 0007) to indicate the end of the output.
 1. Client receives the output until the `\a` character.
-1. Client continues with the next command or sends `bye\n` to close the connection.
+1. Client repeats with the next command or sends `bye\n` to close the connection.
