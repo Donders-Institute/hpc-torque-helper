@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"errors"
+	"path"
 	"flag"
 	"fmt"
 	"io"
@@ -210,7 +211,7 @@ func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
 	case "moabConfig":
 		// Get moab configuration from moab configuration file
 		cmdName = "cat"
-		cmdArgs = []string{"$MOABHOMEDIR/moab.cfg"}
+		cmdArgs = []string{path.Join(*tdir, "moab.cfg")}
 	case "clusterQstat":
 		// Get whole cluster qstat
 		cmdName = "qstat"
