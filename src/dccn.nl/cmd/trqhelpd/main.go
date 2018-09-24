@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"dccn.nl/netutil"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -94,6 +95,9 @@ func main() {
 	}
 	// Close the listener when the application closes.
 	defer l.Close()
+
+	// Use LimitListener to restrict number of activate connections
+	l = netutil.LimitListener(l, 200)
 
 	log.Infof("Listening on %s:%d\n", *connHost, *connPort)
 	for {
