@@ -24,6 +24,7 @@ import (
 var (
 	connHost    *string
 	connPort    *int
+	maxConn     *int
 	tlsCert     *string
 	tlsKey      *string
 	mdir        *string
@@ -36,6 +37,7 @@ func init() {
 	// Command-line arguments
 	connHost = flag.String("h", "0.0.0.0", "set the ip `address` of the server")
 	connPort = flag.Int("p", 60209, "set the port `number` of the server")
+	maxConn = flag.Int("n", 100, "set the max. client connections")
 	mdir = flag.String("m", os.Getenv("MOABHOMEDIR"), "set the `path` of Moab installation, usually referred by $MOABHOMEDIR")
 	tdir = flag.String("t", os.Getenv("TORQUEHOME"), "set the `path` of the Torque installation")
 	tlsCert = flag.String("c", os.Getenv("TLS_CERT"), "set the `path` of the TLS certificate")
@@ -98,7 +100,7 @@ func main() {
 	defer l.Close()
 
 	// Use LimitListener to restrict number of activate connections
-	l = netutil.LimitListener(l, 200)
+	l = netutil.LimitListener(l, *maxConn)
 
 	log.Infof("Listening on %s:%d\n", *connHost, *connPort)
 	for {
@@ -211,7 +213,7 @@ func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
 	case "moabConfig":
 		// Get moab configuration from moab configuration file
 		cmdName = "cat"
-		cmdArgs = []string{path.Join(*tdir, "moab.cfg")}
+		cmdArgs = []string{path.Join(*mdir, "moab.cfg")}
 	case "clusterQstat":
 		// Get whole cluster qstat
 		cmdName = "qstat"
