@@ -3,7 +3,7 @@
 %define debug_package %{nil}
 
 Name:       torque-helper
-Version:    0.4
+Version:    %{getenv:VERSION}
 Release:    1%{?dist}
 Summary:    A helper package for retrieving job/system information from Torque/Moab systems
 License:    FIXME
@@ -22,7 +22,7 @@ The server interfacing the torque/moab systems to deliver job/system information
 
 %package client
 Summary: the client component of the %{name}
-%description server
+%description client
 A set of client CLI tools to interact with the server for retrieving job/system information. 
 
 %prep
