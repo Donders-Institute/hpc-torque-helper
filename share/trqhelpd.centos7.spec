@@ -3,9 +3,9 @@
 %define debug_package %{nil}
 
 Name:       torque-helper
-Version:    0.3
+Version:    0.4
 Release:    1%{?dist}
-Summary:    A helper server for Torque/Moab
+Summary:    A helper package for retrieving job/system information from Torque/Moab systems
 License:    FIXME
 URL: https://github.com/Donders-Institute/%{name}
 Source0: https://github.com/Donders-Institute/%{name}/archive/%{version}.tar.gz
@@ -14,6 +14,16 @@ BuildArch: x86_64
 
 %description
 A helper server for retrieving torque/moab job information with leveraged privilege.
+
+%package server
+Summary: the server component of the %{name}
+%description server
+The server interfacing the torque/moab systems to deliver job/system information to the client.
+
+%package client
+Summary: the client component of the %{name}
+%description server
+A set of client CLI tools to interact with the server for retrieving job/system information. 
 
 %prep
 %setup -q
@@ -28,16 +38,24 @@ mkdir -p %{buildroot}/usr/lib/systemd/system
 mkdir -p %{buildroot}/etc/sysconfig
 install -m 755 bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd
 install -m 755 bin/cluster-qstat %{buildroot}/%{_bindir}/cluster-qstat
+install -m 755 bin/cluster-config %{buildroot}/%{_bindir}/cluster-config
 install -m 644 share/trqhelpd.service %{buildroot}/usr/lib/systemd/system/trqhelpd.service
 install -m 644 share/trqhelpd.env %{buildroot}/etc/sysconfig/trqhelpd
 
-%files
+%files server
 %{_sbindir}/trqhelpd
-%{_bindir}/cluster-qstat
 /usr/lib/systemd/system/trqhelpd.service
 /etc/sysconfig/trqhelpd
 
+%files client
+%{_bindir}/cluster-qstat
+%{_bindir}/cluster-config
+
 %changelog
+* Tue Sep 25 2018 Hong Lee <h.lee@donders.ru.nl> - 0.4-1
+- added more commands to the server
+- added max. connections to the server, default is 100 and changeable via the argument
+- split server and client into two RPM packages
 * Fri Sep 21 2018 Hong Lee <h.lee@donders.ru.nl> - 0.3-1
 - added cluster-qstat, a demo for client CLI program
 - improved the client-server protocol to handle multiple commands
