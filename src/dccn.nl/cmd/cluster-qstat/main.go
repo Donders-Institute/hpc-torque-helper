@@ -12,6 +12,7 @@ import (
 
 var (
 	trqhelpdSrv *string
+	optsXML     *bool
 	optsVerbose *bool
 )
 
@@ -19,6 +20,7 @@ func init() {
 
 	// Command-line arguments
 	trqhelpdSrv = flag.String("s", "torque.dccn.nl:60209", "set the service `endpoint` of the trqhelpd")
+	optsXML = flag.Bool("x", false, "print jobs in XML format")
 	optsVerbose = flag.Bool("v", false, "print debug messages")
 	flag.Usage = usage
 
@@ -53,7 +55,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	for _, m := range []string{"clusterQstat", "bye"} {
+	cmd := "clusterQstat"
+	if *optsXML {
+		cmd += "X"
+	}
+
+	for _, m := range []string{cmd, "bye"} {
 		_, err := conn.Write(append([]byte(m), '\n'))
 		if err != nil {
 			log.Fatalf("client: write: %s", err)

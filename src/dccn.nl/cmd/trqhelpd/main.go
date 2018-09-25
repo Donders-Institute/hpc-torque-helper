@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"errors"
-	"path"
 	"flag"
 	"fmt"
 	"io"
@@ -13,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -213,11 +213,15 @@ func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
 	case "moabConfig":
 		// Get moab configuration from moab configuration file
 		cmdName = "cat"
-		cmdArgs = []string{path.Join(*mdir, "moab.cfg")}
+		cmdArgs = []string{path.Join(*mdir, "etc", "moab.cfg")}
 	case "clusterQstat":
 		// Get whole cluster qstat
 		cmdName = "qstat"
 		cmdArgs = []string{"-a", "-t", "-G", "-n", "-1"}
+	case "clusterQstatX":
+		// Get whole cluster qstat in XML format
+		cmdName = "qstat"
+		cmdArgs = []string{"-x"}
 	case "clusterFaireshare":
 		// Get cluster fairshare status from the diagnose command of moab
 		cmdName = "diagnose"
