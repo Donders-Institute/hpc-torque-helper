@@ -14,14 +14,16 @@ import (
 )
 
 var (
-	trqJobId    *string
-	optsVerbose *bool
+	trqJobId     *string
+	trqHelpdPort *int
+	optsVerbose  *bool
 )
 
 func init() {
 
 	// Command-line arguments
 	trqJobId = flag.String("j", "", "set the job `id`")
+	trqHelpdPort = flag.Int("p", 60209, "set the `port` number of the trqhelpd")
 	optsVerbose = flag.Bool("v", false, "print debug messages")
 	flag.Usage = usage
 
@@ -65,7 +67,7 @@ func main() {
 
 	type Data struct {
 		XMLName xml.Name `xml:"Data"`
-		Jobs    []Job
+		Job     Job
 	}
 
 	// get the job's execution host
@@ -75,26 +77,32 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot get job's execution host: %s", err)
 	}
+	log.Debug(string(b))
 
 	data := Data{}
 	if err := xml.Unmarshal(b, &data); err != nil {
 		log.Fatalf("cannot get job's execution host: %v", err)
 	}
-	log.Debugf("job exec host: %+v", data.Jobs[0])
+	log.Debugf("job exec host: %+v", data.Job)
 
-	jdata := strings.Split(data.Jobs[0].Host, ":")
+	jdata := strings.Split(data.Job.Host, ":")
 	if jdata[0] == "" {
-		log.Fatalf("Invalid job's execution host: %v", data.Jobs[0])
+		log.Fatalf("Invalid job's execution host: %v", data.Job)
 	}
 
 	config := tls.Config{}
-	conn, err := tls.Dial("tcp", jdata[0], &config)
+	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", jdata[0], *trqHelpdPort), &config)
 	if err != nil {
 		log.Fatalf("client: dial: %s", err)
 	}
 	defer conn.Close()
 
-	for _, m := range []string{"jobMemUsageNow", "jobMemUsageMax", "bye"} {
+        cmds := []string {
+		fmt.Sprintf("jobMemInfo++++%s", data.Job.JobID),
+		"bye",
+	}
+
+	for _, m := range cmds {
 		_, err := conn.Write(append([]byte(m), '\n'))
 		if err != nil {
 			log.Fatalf("client: write: %s", err)

@@ -243,20 +243,17 @@ func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
 		}
 		cmdName = "showq"
 		cmdArgs = []string{"-b", "--xml", "-w", "user=" + data[1]}
-	case "jobMemUsageNow":
+	case "jobMemInfo":
+		if len(data) <  2 {
+			err = errors.New( fmt.Sprintf("Job id not provided: %v", data) )
+			return
+		}
 		// Check current job memory usage via cgroups
 		if !strings.HasSuffix(data[1], *trqServer) {
 			data[1] = data[1] + "." + *trqServer
 		}
 		cmdName = "cgget"
-		cmdArgs = []string{"-r", "memory.usage_in_bytes", "torque/" + data[1]}
-	case "jobMemUsageMax":
-		// Check maximum job memory usage via cgroups
-		if !strings.HasSuffix(data[1], *trqServer) {
-			data[1] = data[1] + "." + *trqServer
-		}
-		cmdName = "cgget"
-		cmdArgs = []string{"-r", "memory.max_usage_in_bytes", "torque/" + data[1]}
+		cmdArgs = []string{"-r", "memory.usage_in_bytes", "-r", "memory.max_usage_in_bytes", "torque/" + data[1]}
 	case "getVncServices":
 		// Get list of active vnc services of user
 	default:
