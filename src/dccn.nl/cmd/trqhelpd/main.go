@@ -25,6 +25,7 @@ var (
 	connHost    *string
 	connPort    *int
 	maxConn     *int
+	role        *string
 	tlsCert     *string
 	tlsKey      *string
 	mdir        *string
@@ -41,6 +42,7 @@ func init() {
 	maxConn = flag.Int("n", 100, "set the max. client connections")
 	mdir = flag.String("m", os.Getenv("MOABHOMEDIR"), "set the `path` of Moab installation, usually referred by $MOABHOMEDIR")
 	tdir = flag.String("t", os.Getenv("TORQUEHOME"), "set the `path` of the Torque installation")
+	role = flag.String("m", os.Getenv("TRQHELPD_ROLE"), "set the `role` of the trqhelpd service. \"SRV\" for trqhelpd running on pbs_server node; or \"MOM\" for running on pbs_mom node.")
 	trqServer = flag.String("s", os.Getenv("TORQUESERVER"), "set the `hostname` of the Torque server.  It is used to construct the job's FQID.")
 	tlsCert = flag.String("c", os.Getenv("TLS_CERT"), "set the `path` of the TLS certificate")
 	tlsKey = flag.String("k", os.Getenv("TLS_KEY"), "set the `path` of the TLS private key")
@@ -82,6 +84,18 @@ func main() {
 		os.Setenv("MOABHOMEDIR", *mdir)
 	}
 
+	// Select command mapper based the server role.
+	var cmdMapper CommandMapper
+	switch *role {
+	case "SRV":
+		cmdMapper = CommandMapperSrv{}
+	case "MOM":
+		cmdMapper = CommandMapperMom{}
+	default:
+		log.Error("Unknown service role:", *role)
+		os.Exit(1)
+	}
+
 	// Load server certificate
 	cert, err := tls.LoadX509KeyPair(*tlsCert, *tlsKey)
 
@@ -113,12 +127,12 @@ func main() {
 			os.Exit(1)
 		}
 		// Handle connections in a new goroutine.
-		go handleRequest(conn)
+		go handleRequest(conn, cmdMapper)
 	}
 }
 
 // Handles incoming requests.
-func handleRequest(conn net.Conn) {
+func handleRequest(conn net.Conn, cmdMapper CommandMapper) {
 
 	caddr := conn.RemoteAddr()
 	log.Info(caddr, " connected")
@@ -176,7 +190,7 @@ func handleRequest(conn net.Conn) {
 		}
 
 		// Resolve the actual command name, arguments for making system call.
-		cmdName, cmdArgs, err := switchCommand(m)
+		cmdName, cmdArgs, err := cmdMapper.MapCommand(m)
 
 		// Cannot resolve the command or the command is invalid.
 		// Notify the client with '\a' for the next command.
@@ -203,7 +217,48 @@ func handleRequest(conn net.Conn) {
 	}
 }
 
-func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
+// CommandMapper defines
+type CommandMapper interface {
+	// MapCommand maps incoming TCP command into system call supported on the pbs_mom node.
+	MapCommand(input string) (cmdName string, cmdArgs []string, err error)
+}
+
+// CommandMapperMom implements the CommandMapper interface for trqhelpd service running on pbs_mom node.
+type CommandMapperMom struct {
+}
+
+// MapCommand maps incoming TCP command into system call supported on the pbs_mom node.
+func (c CommandMapperMom) MapCommand(input string) (cmdName string, cmdArgs []string, err error) {
+	// Split input to get command data, as we expect command and arguments
+	// are separated by 4 '+' characters.
+	data := strings.Split(input, "++++")
+	switch data[0] {
+	case "jobMemInfo":
+		if len(data) < 2 {
+			err = fmt.Errorf("Job id not provided: %v", data)
+			return
+		}
+		// Check current job memory usage via cgroups
+		if !strings.HasSuffix(data[1], *trqServer) {
+			data[1] = data[1] + "." + *trqServer
+		}
+		cmdName = "cgget"
+		cmdArgs = []string{"-r", "memory.usage_in_bytes", "-r", "memory.max_usage_in_bytes", "torque/" + data[1]}
+	case "getVncServices":
+		// Get list of active vnc services of user
+	default:
+		err = errors.New("Command not found: " + data[0])
+		return
+	}
+	return
+}
+
+// CommandMapperSrv implements the CommandMapper interface for trqhelpd service running on pbs_server node.
+type CommandMapperSrv struct {
+}
+
+// MapCommand maps incoming TCP command into system call supported on on the pbs_server node.
+func (c CommandMapperSrv) MapCommand(input string) (cmdName string, cmdArgs []string, err error) {
 	// Split input to get command data, as we expect command and arguments
 	// are separated by 4 '+' characters.
 	data := strings.Split(input, "++++")
@@ -243,19 +298,6 @@ func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
 		}
 		cmdName = "showq"
 		cmdArgs = []string{"-b", "--xml", "-w", "user=" + data[1]}
-	case "jobMemInfo":
-		if len(data) <  2 {
-			err = errors.New( fmt.Sprintf("Job id not provided: %v", data) )
-			return
-		}
-		// Check current job memory usage via cgroups
-		if !strings.HasSuffix(data[1], *trqServer) {
-			data[1] = data[1] + "." + *trqServer
-		}
-		cmdName = "cgget"
-		cmdArgs = []string{"-r", "memory.usage_in_bytes", "-r", "memory.max_usage_in_bytes", "torque/" + data[1]}
-	case "getVncServices":
-		// Get list of active vnc services of user
 	default:
 		err = errors.New("Command not found: " + data[0])
 		return

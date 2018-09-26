@@ -15,10 +15,15 @@ BuildArch: x86_64
 %description
 A helper server for retrieving torque/moab job information with leveraged privilege.
 
-%package server
-Summary: the server component of the %{name}
+%package server-srv
+Summary: the server component of the %{name} for the pbs_server node
 %description server
-The server interfacing the torque/moab systems to deliver job/system information to the client.
+The server interfacing the torque/mom systems running on the pbs_server node to deliver job/system information to the client.
+
+%package server-mom
+Summary: the server component of the %{name} for the pbs_mom node
+%description server
+The server interfacing the pbs_mom node to deliver job information to the client.
 
 %package client
 Summary: the client component of the %{name}
@@ -40,9 +45,19 @@ install -m 755 bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd
 install -m 755 bin/cluster-qstat %{buildroot}/%{_bindir}/cluster-qstat
 install -m 755 bin/cluster-config %{buildroot}/%{_bindir}/cluster-config
 install -m 644 share/trqhelpd.service %{buildroot}/usr/lib/systemd/system/trqhelpd.service
-install -m 644 share/trqhelpd.env %{buildroot}/etc/sysconfig/trqhelpd
 
-%files server
+%install server-mom
+install -m 644 share/trqhelpd.mom.env %{buildroot}/etc/sysconfig/trqhelpd
+
+%install server-srv
+install -m 644 share/trqhelpd.srv.env %{buildroot}/etc/sysconfig/trqhelpd
+
+%files server-srv
+%{_sbindir}/trqhelpd
+/usr/lib/systemd/system/trqhelpd.service
+/etc/sysconfig/trqhelpd
+
+%files server-mom
 %{_sbindir}/trqhelpd
 /usr/lib/systemd/system/trqhelpd.service
 /etc/sysconfig/trqhelpd

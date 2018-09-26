@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	trqJobId     *string
+	trqJobID     *string
 	trqHelpdPort *int
 	optsVerbose  *bool
 )
@@ -22,7 +22,7 @@ var (
 func init() {
 
 	// Command-line arguments
-	trqJobId = flag.String("j", "", "set the job `id`")
+	trqJobID = flag.String("j", "", "set the job `id`")
 	trqHelpdPort = flag.Int("p", 60209, "set the `port` number of the trqhelpd")
 	optsVerbose = flag.Bool("v", false, "print debug messages")
 	flag.Usage = usage
@@ -61,8 +61,9 @@ func main() {
 
 	// defining data structure for unmarshalling qstat's XML document
 	type Job struct {
-		JobID string `xml:"Job_Id"`
-		Host  string `xml:"req_information>hostlist.0"`
+		JobID  string `xml:"Job_Id"`
+		Host   string `xml:"req_information>hostlist.0"`
+		Memset string `xml:"memset_string"`
 	}
 
 	type Data struct {
@@ -85,7 +86,7 @@ func main() {
 	}
 	log.Debugf("job exec host: %+v", data.Job)
 
-	jdata := strings.Split(data.Job.Host, ":")
+	jdata := strings.Split(data.Job.Memset, ":")
 	if jdata[0] == "" {
 		log.Fatalf("Invalid job's execution host: %v", data.Job)
 	}
@@ -97,7 +98,7 @@ func main() {
 	}
 	defer conn.Close()
 
-        cmds := []string {
+	cmds := []string{
 		fmt.Sprintf("jobMemInfo++++%s", data.Job.JobID),
 		"bye",
 	}
