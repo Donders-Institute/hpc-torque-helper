@@ -29,6 +29,7 @@ var (
 	tlsKey      *string
 	mdir        *string
 	tdir        *string
+	trqServer   *string
 	optsVerbose *bool
 )
 
@@ -40,6 +41,7 @@ func init() {
 	maxConn = flag.Int("n", 100, "set the max. client connections")
 	mdir = flag.String("m", os.Getenv("MOABHOMEDIR"), "set the `path` of Moab installation, usually referred by $MOABHOMEDIR")
 	tdir = flag.String("t", os.Getenv("TORQUEHOME"), "set the `path` of the Torque installation")
+	trqServer = flag.String("s", os.Getenv("TORQUESERVER"), "set the `hostname` of the Torque server.  It is used to construct the job's FQID.")
 	tlsCert = flag.String("c", os.Getenv("TLS_CERT"), "set the `path` of the TLS certificate")
 	tlsKey = flag.String("k", os.Getenv("TLS_KEY"), "set the `path` of the TLS private key")
 	optsVerbose = flag.Bool("v", false, "print debug messages")
@@ -235,13 +237,28 @@ func switchCommand(input string) (cmdName string, cmdArgs []string, err error) {
 		cmdName = "checkjob"
 		cmdArgs = []string{"--xml", data[1]}
 	case "getBlockedJobsOfUser":
-		// TODO: Check if the uid is a valid user
 		if _, ierr := user.Lookup(data[1]); ierr != nil {
 			err = errors.New("Invalid username: " + data[1])
 			return
 		}
 		cmdName = "showq"
 		cmdArgs = []string{"-b", "--xml", "-w", "user=" + data[1]}
+	case "jobMemUsageNow":
+		// Check current job memory usage via cgroups
+		if !strings.HasSuffix(data[1], *trqServer) {
+			data[1] = data[1] + "." + *trqServer
+		}
+		cmdName = "cgget"
+		cmdArgs = []string{"-r", "memory.usage_in_bytes", "torque/" + data[1]}
+	case "jobMemUsageMax":
+		// Check maximum job memory usage via cgroups
+		if !strings.HasSuffix(data[1], *trqServer) {
+			data[1] = data[1] + "." + *trqServer
+		}
+		cmdName = "cgget"
+		cmdArgs = []string{"-r", "memory.max_usage_in_bytes", "torque/" + data[1]}
+	case "getVncServices":
+		// Get list of active vnc services of user
 	default:
 		err = errors.New("Command not found: " + data[0])
 		return
