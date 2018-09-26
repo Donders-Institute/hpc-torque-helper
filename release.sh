@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 function get_script_dir() {
     ## resolve the base directory of this executable
@@ -40,8 +40,10 @@ fi
 
 tag=$1
 pre=$2
-gh_uname=$3
+gh_name=$3
+gh_pass=""
 
+RPM_BUILD_ROOT=$HOME/rpmbuild
 GH_API="https://api.github.com"
 GH_REPO="$GH_API/repos/Donders-Institute/torque-helper"
 GH_RELE="$GH_REPO/releases"
@@ -65,10 +67,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi 
 
+while [ "$gh_pass" == "" ]; do
+    read -s -p "github password (${gh_name}): " gh_pass
+done
+
 # create a new tag with current master branch
 # if the $id of the release is not available.
 if [ ! "$id" ]; then
-    response=$(curl -u ${gh_uname} -X POST --data "$(new_release_post_data ${tag} ${pre})" $GH_RELE)
+    response=$(curl -u ${gh_name}:${gh_pass} -X POST --data "$(new_release_post_data ${tag} ${pre})" $GH_RELE)
     eval $(echo "$response" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
     [ "$id" ] || { echo "release tag not created successfully: ${tag}"; exit 1; }
 fi
@@ -79,7 +85,7 @@ rid=$id
 mydir=$( get_script_dir $0 )
 path_spec=${mydir}/share/trqhelpd.centos7.spec
 
-## replace the release version in 
+## replace the release version in
 out=$( VERSION=${tag} rpmbuild --undefine=_disable_source_fetch -bb ${path_spec} )
 if [ $? -ne 0 ]; then
     echo "rpm build failure"
@@ -96,20 +102,20 @@ if [ ${#rpms[@]} -gt 0 ]; then
     for rpm in ${rpms[@]}; do
         echo ${rpm}
         if [ "${upload,,}" == "y" ]; then
-            echo "uploading ${rpm} ..."
             fname=$( basename $rpm )
             # check if the asset with the same name already exists
             id=""
-            eval $(echo "$response" | grep -C1 "name.:.\+${fname}" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+            eval $(echo "$response" | grep -C3 "name.:.\+${fname}" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
             if [ "$id" != "" ]; then
                 # delete existing asset
                 echo "deleting asset: ${id} ..."
-                curl -u ${gh_uname} -X DELETE "${GH_RELE}/assets/${asset_id}"
+                curl -u ${gh_name}:${gh_pass} -X DELETE "${GH_RELE}/assets/${id}"
             fi
             # post new asset
+            echo "uploading ${rpm} ..."
             GH_ASSET="${GH_REPO_ASSET_PREFIX}/${rid}/assets?name=$(basename $rpm)"
-            response=$( curl -u ${gh_uname} --data-binary @${rpm} \
-                             -H "Content-Type: application/octet-stream" $GH_ASSET )
+            resp_upload=$( curl -u ${gh_name}:${gh_pass} --data-binary @${rpm} \
+                                -H "Content-Type: application/octet-stream" $GH_ASSET )
         fi
     done
 fi
