@@ -115,6 +115,8 @@ rm -f %{_topdir}/SOURCES/%{version}.tar.gz
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Sep 27 2018 Hong Lee <h.lee@donders.ru.nl> - 0.6-1
+- improved RPM spec for better handling on postun for upgrade
 * Thu Sep 27 2018 Hong Lee <h.lee@donders.ru.nl> - 0.5-1
 - added `jobMemInfo` command to the server
 - rearranged the service component for pbs_server and pbs_mom nodes
