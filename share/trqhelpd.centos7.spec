@@ -48,12 +48,12 @@ mkdir -p %{buildroot}/%{_sbindir}
 mkdir -p %{buildroot}/%{_bindir}
 mkdir -p %{buildroot}/usr/lib/systemd/system
 mkdir -p %{buildroot}/etc/sysconfig
+## install the service binary
+install -m 755 bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd
 ## install files for trqhelpd_srv service
-install -m 755 bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd_srv
 install -m 644 share/trqhelpd_srv.service %{buildroot}/usr/lib/systemd/system/trqhelpd_srv.service
 install -m 644 share/trqhelpd_srv.env %{buildroot}/etc/sysconfig/trqhelpd_srv
 ## install files for trqhelpd_mom service
-install -m 755 bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd_mom
 install -m 644 share/trqhelpd_mom.service %{buildroot}/usr/lib/systemd/system/trqhelpd_mom.service
 install -m 644 share/trqhelpd_mom.env %{buildroot}/etc/sysconfig/trqhelpd_mom
 ## install files for client tools
@@ -62,12 +62,12 @@ install -m 755 bin/cluster-config %{buildroot}/%{_bindir}/cluster-config
 install -m 755 bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-jobmeminfo
 
 %files server-srv
-%{_sbindir}/trqhelpd_srv
+%{_sbindir}/trqhelpd
 /usr/lib/systemd/system/trqhelpd_srv.service
 /etc/sysconfig/trqhelpd_srv
 
 %files server-mom
-%{_sbindir}/trqhelpd_mom
+%{_sbindir}/trqhelpd
 /usr/lib/systemd/system/trqhelpd_mom.service
 /etc/sysconfig/trqhelpd_mom
 
