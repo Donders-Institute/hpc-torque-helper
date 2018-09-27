@@ -1,11 +1,11 @@
 [Unit]
-Description=Torque Helper Service
-After=pbs_server.service moab.service network.target rsyslog.target local-fs.target
+Description=Torque Helper Service for pbs_mom node
+After=pbs_mom network.target rsyslog.target local-fs.target
 
 [Service]
 Type=simple
 User=root
-EnvironmentFile=-/etc/sysconfig/trqhelpd
+EnvironmentFile=-/etc/sysconfig/trqhelpd_mom
 ExecStart=/usr/sbin/trqhelpd -h 0.0.0.0 -p 60209
 StandardOutput=syslog
 Restart=no
