@@ -89,6 +89,7 @@ echo "enabling service trqhelpd_srv ..."
 systemctl daemon-reload
 systemctl enable trqhelpd_srv.service
 echo "starting service trqhelpd_srv ..."
+systemctl stop trqhelpd_srv.service
 systemctl start trqhelpd_srv.service
 
 %post server-mom
@@ -96,13 +97,18 @@ echo "enabling service trqhelpd_mom ..."
 systemctl daemon-reload
 systemctl enable trqhelpd_mom.service
 echo "starting service trqhelpd_mom ..."
+systemctl stop trqhelpd_srv.service
 systemctl start trqhelpd_srv.service
 
 %postun server-srv
-[ $1 -eq 0 ] && systemctl daemon-reload
+if [ $1 -eq 0 ]; then
+    systemctl daemon-reload
+fi
 
 %postun server-mom
-[ $1 -eq 0 ] && systemctl daemon-reload
+if [ $1 -eq 0 ]; then
+    systemctl daemon-reload
+fi
 
 %clean
 rm -f %{_topdir}/SOURCES/%{version}.tar.gz
