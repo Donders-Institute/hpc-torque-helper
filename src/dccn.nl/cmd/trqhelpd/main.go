@@ -42,7 +42,7 @@ func init() {
 	maxConn = flag.Int("n", 100, "set the max. client connections")
 	mdir = flag.String("m", os.Getenv("MOABHOMEDIR"), "set the `path` of Moab installation, usually referred by $MOABHOMEDIR")
 	tdir = flag.String("t", os.Getenv("TORQUEHOME"), "set the `path` of the Torque installation")
-	role = flag.String("m", os.Getenv("TRQHELPD_ROLE"), "set the `role` of the trqhelpd service. \"SRV\" for trqhelpd running on pbs_server node; or \"MOM\" for running on pbs_mom node.")
+	role = flag.String("r", os.Getenv("TRQHELPD_ROLE"), "set the `role` of the trqhelpd service. \"SRV\" for trqhelpd running on pbs_server node; or \"MOM\" for running on pbs_mom node.")
 	trqServer = flag.String("s", os.Getenv("TORQUESERVER"), "set the `hostname` of the Torque server.  It is used to construct the job's FQID.")
 	tlsCert = flag.String("c", os.Getenv("TLS_CERT"), "set the `path` of the TLS certificate")
 	tlsKey = flag.String("k", os.Getenv("TLS_KEY"), "set the `path` of the TLS private key")
