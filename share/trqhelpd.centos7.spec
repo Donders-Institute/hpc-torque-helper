@@ -35,10 +35,18 @@ A set of client CLI tools to interact with the server for retrieving job/system 
 %setup -q
 
 %preun server-srv
-%systemd_preun trqhelpd_srv.service
+if [ $1 -eq 0 ]; then
+    echo "stopping service trqhelpd_srv ..." 
+    systemctl stop trqhelpd_srv.service
+    systemctl disable trqhelpd_srv.service
+fi
 
 %preun server-mom
-%systemd_preun trqhelpd_mom.service
+if [ $1 -eq 0 ]; then
+    echo "stopping service trqhelpd_mom ..." 
+    systemctl stop trqhelpd_mom.service
+    systemctl disable trqhelpd_srv.service
+fi
 
 %build
 make
@@ -76,13 +84,35 @@ install -m 755 bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-jobmeminfo
 %{_bindir}/cluster-config
 %{_bindir}/cluster-jobmeminfo
 
+%post server-srv
+echo "enabling service trqhelpd_srv ..."
+systemctl daemon-reload
+systemctl enable trqhelpd_srv.service
+echo "starting service trqhelpd_srv ..."
+systemctl start trqhelpd_srv.service
+
+%post server-mom
+echo "enabling service trqhelpd_mom ..."
+systemctl daemon-reload
+systemctl enable trqhelpd_mom.service
+echo "starting service trqhelpd_mom ..."
+systemctl start trqhelpd_srv.service
+
 %postun server-srv
-%systemd_postun_with_restart trqhelpd_srv.service
+[ $1 -eq 0 ] && systemctl daemon-reload
 
 %postun server-mom
-%systemd_postun_with_restart trqhelpd_mom.service
+[ $1 -eq 0 ] && systemctl daemon-reload
+
+%clean
+rm -f %{_topdir}/SOURCES/%{version}.tar.gz
+rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Sep 27 2018 Hong Lee <h.lee@donders.ru.nl> - 0.5-1
+- added `jobMemInfo` command to the server
+- rearranged the service component for pbs_server and pbs_mom nodes
+- introduced release script to make release tag on GitHub and added RPMs as extra assets
 * Tue Sep 25 2018 Hong Lee <h.lee@donders.ru.nl> - 0.4-1
 - added more commands to the server
 - added max. connections to the server, default is 100 and changeable via the argument
