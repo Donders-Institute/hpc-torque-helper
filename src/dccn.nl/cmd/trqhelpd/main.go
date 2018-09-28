@@ -218,7 +218,7 @@ func handleRequest(conn net.Conn, cmdMapper CommandMapper) {
 
 func validateJobID(id string) (jobFqid string, err error) {
 	// Trim the job suffix
-	sid := strings.TrimRight(id, ".")
+	sid := strings.Split(id, ".")[0]
 	jobFqid = id
 	// Check if the id is a digit number
 	if match, _ := regexp.MatchString("^([0-9]+)$", sid); !match {
