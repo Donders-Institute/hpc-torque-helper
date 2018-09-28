@@ -67,6 +67,7 @@ install -m 644 share/trqhelpd_mom.env %{buildroot}/etc/sysconfig/trqhelpd_mom
 ## install files for client tools
 install -m 755 bin/cluster-qstat %{buildroot}/%{_bindir}/cluster-qstat
 install -m 755 bin/cluster-config %{buildroot}/%{_bindir}/cluster-config
+install -m 755 bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-tracejob
 install -m 755 bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-jobmeminfo
 
 %files server-srv
@@ -82,6 +83,7 @@ install -m 755 bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-jobmeminfo
 %files client
 %{_bindir}/cluster-qstat
 %{_bindir}/cluster-config
+%{_bindir}/cluster-tracejob
 %{_bindir}/cluster-jobmeminfo
 
 %post server-srv
@@ -115,6 +117,9 @@ rm -f %{_topdir}/SOURCES/%{version}.tar.gz
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Fri Sep 28 2018 Hong Lee <h.lee@donders.ru.nl> - 0.7-1
+- added `traceJob` command to the server
+- added `cluster-tracejob` tool to the client
 * Thu Sep 27 2018 Hong Lee <h.lee@donders.ru.nl> - 0.6-1
 - improved RPM spec for better handling on postun for upgrade
 * Thu Sep 27 2018 Hong Lee <h.lee@donders.ru.nl> - 0.5-1

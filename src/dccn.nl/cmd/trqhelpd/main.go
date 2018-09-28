@@ -11,7 +11,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"os/user"
 	"path"
 	"regexp"
 	"strings"
@@ -217,6 +216,27 @@ func handleRequest(conn net.Conn, cmdMapper CommandMapper) {
 	}
 }
 
+func validateJobID(id string) (jobFqid string, err error) {
+	// Trim the job suffix
+	sid := strings.TrimRight(id, ".")
+	jobFqid = id
+	// Check if the id is a digit number
+	if match, _ := regexp.MatchString("([0-9]+)", sid); !match {
+		err = errors.New("Invalid job id: " + id)
+		return
+	}
+	// Compose jobFqid if the provided id is not the FQID
+	if sid != id {
+		jobFqid = id + "." + *trqServer
+	}
+	return
+}
+
+func validateUserID(id string) (err error) {
+	err = errors.New("Invalid username: " + id)
+	return
+}
+
 // CommandMapper defines
 type CommandMapper interface {
 	// MapCommand maps incoming TCP command into system call supported on the pbs_mom node.
@@ -234,16 +254,18 @@ func (c CommandMapperMom) MapCommand(input string) (cmdName string, cmdArgs []st
 	data := strings.Split(input, "++++")
 	switch data[0] {
 	case "jobMemInfo":
+		// Check current job memory usage via cgroups
 		if len(data) < 2 {
 			err = fmt.Errorf("Job id not provided: %v", data)
 			return
 		}
-		// Check current job memory usage via cgroups
-		if !strings.HasSuffix(data[1], *trqServer) {
-			data[1] = data[1] + "." + *trqServer
+		jobFqid, verr := validateJobID(data[1])
+		if verr != nil {
+			err = verr
+			return
 		}
 		cmdName = "cgget"
-		cmdArgs = []string{"-r", "memory.usage_in_bytes", "-r", "memory.max_usage_in_bytes", "torque/" + data[1]}
+		cmdArgs = []string{"-r", "memory.usage_in_bytes", "-r", "memory.max_usage_in_bytes", "torque/" + jobFqid}
 	case "getVncServices":
 		// Get list of active vnc services of user
 	default:
@@ -284,20 +306,42 @@ func (c CommandMapperSrv) MapCommand(input string) (cmdName string, cmdArgs []st
 		cmdName = "diagnose"
 		cmdArgs = []string{"-f"}
 	case "checkBlockedJob":
-		// Check if the id is a digit number
-		if match, _ := regexp.MatchString("([0-9]+)", data[1]); !match {
-			err = errors.New("Invalid job id: " + data[1])
+		// Get details of a blocked job
+		if len(data) < 2 {
+			err = fmt.Errorf("Job id not provided: %v", data)
+			return
+		}
+		jobFqid, verr := validateJobID(data[1])
+		if verr != nil {
+			err = verr
 			return
 		}
 		cmdName = "checkjob"
-		cmdArgs = []string{"--xml", data[1]}
+		cmdArgs = []string{"--xml", jobFqid}
 	case "getBlockedJobsOfUser":
-		if _, ierr := user.Lookup(data[1]); ierr != nil {
-			err = errors.New("Invalid username: " + data[1])
+		// Get blocked jobs of a user
+		if len(data) < 2 {
+			err = fmt.Errorf("user id not provided: %v", data)
+			return
+		}
+		if err = validateUserID(data[1]); err != nil {
 			return
 		}
 		cmdName = "showq"
 		cmdArgs = []string{"-b", "--xml", "-w", "user=" + data[1]}
+	case "traceJob":
+		// Trace a given job from the logs in the last 3 days
+		if len(data) < 2 {
+			err = fmt.Errorf("job id not provided: %v", data)
+			return
+		}
+		jobFqid, verr := validateJobID(data[1])
+		if verr != nil {
+			err = verr
+			return
+		}
+		cmdName = "tracejob"
+		cmdArgs = []string{"-n", "3", jobFqid}
 	default:
 		err = errors.New("Command not found: " + data[0])
 		return
