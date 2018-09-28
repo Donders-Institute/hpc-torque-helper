@@ -227,7 +227,7 @@ func validateJobID(id string) (jobFqid string, err error) {
 	}
 	// Compose jobFqid if the provided id is not the FQID
 	if sid != id {
-		jobFqid = id + "." + *trqServer
+		jobFqid = sid + "." + *trqServer
 	}
 	return
 }
