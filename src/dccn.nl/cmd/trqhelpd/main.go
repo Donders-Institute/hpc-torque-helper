@@ -221,7 +221,7 @@ func validateJobID(id string) (jobFqid string, err error) {
 	sid := strings.TrimRight(id, ".")
 	jobFqid = id
 	// Check if the id is a digit number
-	if match, _ := regexp.MatchString("([0-9]+)", sid); !match {
+	if match, _ := regexp.MatchString("^([0-9]+)$", sid); !match {
 		err = errors.New("Invalid job id: " + id)
 		return
 	}
