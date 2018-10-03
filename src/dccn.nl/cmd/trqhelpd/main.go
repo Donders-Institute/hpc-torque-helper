@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"regexp"
 	"strings"
@@ -233,7 +234,7 @@ func validateJobID(id string) (jobFqid string, err error) {
 }
 
 func validateUserID(id string) (err error) {
-	err = errors.New("Invalid username: " + id)
+	_, err = user.Lookup(id)
 	return
 }
 
