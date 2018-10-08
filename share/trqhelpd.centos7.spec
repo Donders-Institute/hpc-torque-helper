@@ -4,7 +4,7 @@
 
 Name:       torque-helper
 Version:    %{getenv:VERSION}
-Release:    2%{?dist}
+Release:    1%{?dist}
 Summary:    A helper package for retrieving job/system information from Torque/Moab systems
 License:    FIXME
 URL: https://github.com/Donders-Institute/%{name}
