@@ -4,7 +4,7 @@
 
 Name:       torque-helper
 Version:    %{getenv:VERSION}
-Release:    1%{?dist}
+Release:    2%{?dist}
 Summary:    A helper package for retrieving job/system information from Torque/Moab systems
 License:    FIXME
 URL: https://github.com/Donders-Institute/%{name}
@@ -99,8 +99,8 @@ echo "enabling service trqhelpd_mom ..."
 systemctl daemon-reload
 systemctl enable trqhelpd_mom.service
 echo "starting service trqhelpd_mom ..."
-systemctl stop trqhelpd_srv.service
-systemctl start trqhelpd_srv.service
+systemctl stop trqhelpd_mom.service
+systemctl start trqhelpd_mom.service
 
 %postun server-srv
 if [ $1 -eq 0 ]; then
