@@ -67,7 +67,7 @@ install -m 644 share/trqhelpd_mom.env %{buildroot}/etc/sysconfig/trqhelpd_mom
 ## install files for client tools
 install -m 755 bin/cluster-qstat %{buildroot}/%{_bindir}/cluster-qstat
 install -m 755 bin/cluster-config %{buildroot}/%{_bindir}/cluster-config
-install -m 755 bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-tracejob
+install -m 755 bin/cluster-tracejob %{buildroot}/%{_bindir}/cluster-tracejob
 install -m 755 bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-jobmeminfo
 
 %files server-srv
@@ -99,8 +99,8 @@ echo "enabling service trqhelpd_mom ..."
 systemctl daemon-reload
 systemctl enable trqhelpd_mom.service
 echo "starting service trqhelpd_mom ..."
-systemctl stop trqhelpd_srv.service
-systemctl start trqhelpd_srv.service
+systemctl stop trqhelpd_mom.service
+systemctl start trqhelpd_mom.service
 
 %postun server-srv
 if [ $1 -eq 0 ]; then
