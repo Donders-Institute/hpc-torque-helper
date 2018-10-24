@@ -4,7 +4,7 @@ A TCP-socket server and client-side tools for retrieving Torque/Moab job informa
 ## How it works
 The server is designed to run on the Torque server.  It should be run by an user who has the required privileges to retrieve job information from the torque/moab server.
 
-The server listen on a TCP socket, and waiting for a client to send in a *command* via a certain protocol (see below). When the server recieves a command, it maps the command to a system call and returns output to the server.
+The server listen on a TCP socket, and waiting for a client to send in a *command* following a commnication protocol (see below). When the server recieves a command, it maps the command to a system call and returns output to the client.
 
 ## cliet-server communication protocol
 1. Client initiates a TCP socket with TLS.
