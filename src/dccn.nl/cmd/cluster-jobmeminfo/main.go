@@ -82,11 +82,14 @@ func main() {
 	if err := xml.Unmarshal(b, &data); err != nil {
 		log.Fatalf("cannot get job's execution host: %v", err)
 	}
-	log.Debugf("job exec host: %+v", data.Job)
+
+	// remove the eventual node attributes concatenated to the node's hostname with ":"
+	data.Job.Host = strings.Split(data.Job.Host, ":")[0]
+	log.Debugf("job data parsed from XML: %+v", data.Job)
 
 	jdata := strings.Split(data.Job.Memset, ":")
 	if jdata[0] == "" {
-		log.Fatalf("Invalid job's execution host: %v", data.Job)
+		log.Fatalf("Invalid job's execution host: %+v", data.Job)
 	}
 
 	config := tls.Config{}
