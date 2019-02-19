@@ -2,7 +2,7 @@
 # rpmbuild -bb
 %define debug_package %{nil}
 
-Name:       torque-helper
+Name:       hpc-torque-helper
 Version:    %{getenv:VERSION}
 Release:    1%{?dist}
 Summary:    A helper package for retrieving job/system information from Torque/Moab systems
