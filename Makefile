@@ -25,4 +25,6 @@ install: build
 	@install -D $(GOPATH)/bin/* $(PREFIX)/bin
 
 clean:
-	@rm -rf bin
+	@rm -rf $(GOPATH)/bin/cluster-*
+	@rm -rf $(GOPATH)/bin/trqhelpd
+	@rm -rf $(GOPATH)/pkg/*/Donders-Institute/hpc-torque-helper
