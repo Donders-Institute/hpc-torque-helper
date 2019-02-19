@@ -53,6 +53,7 @@ fi
 
 %build
 # create GOPATH structure within the source code
+rm -rf %{gopath}
 mkdir -p %{gopath}/src/Donders-Institute
 # copy entire directory into gopath, this duplicate the source code
 cp -R %{_builddir}/%{name}-%{version} %{gopath}/src/Donders-Institute/%{name}
