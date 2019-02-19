@@ -1,4 +1,4 @@
-# torque-helper
+# hpc-torque-helper
 A TCP-socket server and client-side tools for retrieving Torque/Moab job information that requires elevated privileges, such as root or the Torque system admin.
 
 ## How it works
