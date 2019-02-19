@@ -45,10 +45,10 @@ gh_pass=""
 
 RPM_BUILD_ROOT=$HOME/rpmbuild
 GH_API="https://api.github.com"
-GH_REPO="$GH_API/repos/Donders-Institute/torque-helper"
+GH_REPO="$GH_API/repos/Donders-Institute/hpc-torque-helper"
 GH_RELE="$GH_REPO/releases"
 GH_TAG="$GH_REPO/releases/tags/$tag"
-GH_REPO_ASSET_PREFIX="https://uploads.github.com/repos/Donders-Institute/torque-helper/releases"
+GH_REPO_ASSET_PREFIX="https://uploads.github.com/repos/Donders-Institute/hpc-torque-helper/releases"
 
 # check if version tag already exists
 response=$(curl -X GET $GH_TAG 2>/dev/null)
