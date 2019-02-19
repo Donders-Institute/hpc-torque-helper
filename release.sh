@@ -83,7 +83,7 @@ fi
 rid=$id
 
 mydir=$( get_script_dir $0 )
-path_spec=${mydir}/share/trqhelpd.centos7.spec
+path_spec=${mydir}/build/trqhelpd.centos7.spec
 
 ## replace the release version in
 out=$( VERSION=${tag} rpmbuild --undefine=_disable_source_fetch -bb ${path_spec} )
