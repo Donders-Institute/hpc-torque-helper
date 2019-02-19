@@ -29,11 +29,6 @@ Summary: the server component of the %{name} for the pbs_mom node
 %description server-mom
 The server interfacing the pbs_mom node to deliver job information to the client.
 
-%package client
-Summary: the client component of the %{name}
-%description client
-A set of client CLI tools to interact with the server for retrieving job/system information. 
-
 %prep
 %setup -q
 
@@ -72,11 +67,6 @@ install -m 644 scripts/trqhelpd_srv.env %{buildroot}/etc/sysconfig/trqhelpd_srv
 ## install files for trqhelpd_mom service
 install -m 644 scripts/trqhelpd_mom.service %{buildroot}/usr/lib/systemd/system/trqhelpd_mom.service
 install -m 644 scripts/trqhelpd_mom.env %{buildroot}/etc/sysconfig/trqhelpd_mom
-## install files for client tools
-install -m 755 %{gopath}/bin/cluster-qstat %{buildroot}/%{_bindir}/cluster-qstat
-install -m 755 %{gopath}/bin/cluster-config %{buildroot}/%{_bindir}/cluster-config
-install -m 755 %{gopath}/bin/cluster-tracejob %{buildroot}/%{_bindir}/cluster-tracejob
-install -m 755 %{gopath}/bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-jobmeminfo
 
 %files server-srv
 %{_sbindir}/trqhelpd
@@ -87,12 +77,6 @@ install -m 755 %{gopath}/bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-
 %{_sbindir}/trqhelpd
 /usr/lib/systemd/system/trqhelpd_mom.service
 /etc/sysconfig/trqhelpd_mom
-
-%files client
-%{_bindir}/cluster-qstat
-%{_bindir}/cluster-config
-%{_bindir}/cluster-tracejob
-%{_bindir}/cluster-jobmeminfo
 
 %post server-srv
 echo "enabling service trqhelpd_srv ..."
