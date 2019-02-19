@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rpmbuild --undefine=_disable_source_fetch -bb share/trqhelpd.centos7.spec
+GOPATH=$HOME/Projects/go rpmbuild --undefine=_disable_source_fetch -bb build/trqhelpd.centos7.spec
