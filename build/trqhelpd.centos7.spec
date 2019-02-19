@@ -13,6 +13,9 @@ Source0: https://github.com/Donders-Institute/%{name}/archive/%{version}.tar.gz
 BuildArch: x86_64
 BuildRequires: systemd
 
+# defin the GOPATH that is created later within the extracted source code.
+%define gopath %{getenv:GOPATH}
+
 %description
 A helper server for retrieving torque/moab job information with leveraged privilege.
 
@@ -49,7 +52,11 @@ if [ $1 -eq 0 ]; then
 fi
 
 %build
-make
+# create GOPATH structure within the source code
+mkdir -p %{gopath}/src/Donders-Institute
+# copy entire directory into gopath, this duplicate the source code
+cp -R %{_builddir}/%{name}-%{version} %{gopath}/src/Donders-Institute/%{name}
+cd %{gopath}/src/Donders-Institute/%{name}; GOPATH=%{gopath} make
 
 %install
 mkdir -p %{buildroot}/%{_sbindir}
@@ -57,7 +64,7 @@ mkdir -p %{buildroot}/%{_bindir}
 mkdir -p %{buildroot}/usr/lib/systemd/system
 mkdir -p %{buildroot}/etc/sysconfig
 ## install the service binary
-install -m 755 bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd
+install -m 755 %{gopath}/bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd
 ## install files for trqhelpd_srv service
 install -m 644 scripts/trqhelpd_srv.service %{buildroot}/usr/lib/systemd/system/trqhelpd_srv.service
 install -m 644 scripts/trqhelpd_srv.env %{buildroot}/etc/sysconfig/trqhelpd_srv
@@ -65,10 +72,10 @@ install -m 644 scripts/trqhelpd_srv.env %{buildroot}/etc/sysconfig/trqhelpd_srv
 install -m 644 scripts/trqhelpd_mom.service %{buildroot}/usr/lib/systemd/system/trqhelpd_mom.service
 install -m 644 scripts/trqhelpd_mom.env %{buildroot}/etc/sysconfig/trqhelpd_mom
 ## install files for client tools
-install -m 755 bin/cluster-qstat %{buildroot}/%{_bindir}/cluster-qstat
-install -m 755 bin/cluster-config %{buildroot}/%{_bindir}/cluster-config
-install -m 755 bin/cluster-tracejob %{buildroot}/%{_bindir}/cluster-tracejob
-install -m 755 bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-jobmeminfo
+install -m 755 %{gopath}/bin/cluster-qstat %{buildroot}/%{_bindir}/cluster-qstat
+install -m 755 %{gopath}/bin/cluster-config %{buildroot}/%{_bindir}/cluster-config
+install -m 755 %{gopath}/bin/cluster-tracejob %{buildroot}/%{_bindir}/cluster-tracejob
+install -m 755 %{gopath}/bin/cluster-jobmeminfo %{buildroot}/%{_bindir}/cluster-jobmeminfo
 
 %files server-srv
 %{_sbindir}/trqhelpd
@@ -113,6 +120,7 @@ if [ $1 -eq 0 ]; then
 fi
 
 %clean
+rm -rf %{gopath} 
 rm -f %{_topdir}/SOURCES/%{version}.tar.gz
 rm -rf $RPM_BUILD_ROOT
 
