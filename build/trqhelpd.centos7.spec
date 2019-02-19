@@ -14,7 +14,7 @@ BuildArch: x86_64
 BuildRequires: systemd
 
 # defin the GOPATH that is created later within the extracted source code.
-%define gopath %{getenv:GOPATH}
+%define gopath %{_tmppath}/go.rpmbuild-%{name}-%{version}
 
 %description
 A helper server for retrieving torque/moab job information with leveraged privilege.
