@@ -45,7 +45,7 @@ fi
 if [ $1 -eq 0 ]; then
     echo "stopping service trqhelpd_mom ..." 
     systemctl stop trqhelpd_mom.service
-    systemctl disable trqhelpd_srv.service
+    systemctl disable trqhelpd_mom.service
 fi
 
 %build
