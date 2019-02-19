@@ -1,24 +1,26 @@
 package main
 
 import (
-	"crypto/tls"
 	"flag"
 	"fmt"
-	"io"
 	"os"
+
+	cli "Donders-Institute/hpc-torque-helper/pkg"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	trqhelpdSrv *string
-	optsVerbose *bool
+	trqhelpdHost *string
+	trqhelpdPort *int
+	optsVerbose  *bool
 )
 
 func init() {
 
 	// Command-line arguments
-	trqhelpdSrv = flag.String("s", "torque.dccn.nl:60209", "set the service `endpoint` of the trqhelpd")
+	trqhelpdHost = flag.String("h", "torque.dccn.nl", "set the service `host` of the trqhelpd")
+	trqhelpdPort = flag.Int("p", 60209, "set the service `port` of the trqhelpd")
 	optsVerbose = flag.Bool("v", false, "print debug messages")
 	flag.Usage = usage
 
@@ -45,50 +47,5 @@ func usage() {
 }
 
 func main() {
-	config := tls.Config{}
-
-	conn, err := tls.Dial("tcp", *trqhelpdSrv, &config)
-	if err != nil {
-		log.Fatalf("client: dial: %s", err)
-	}
-	defer conn.Close()
-
-	for _, m := range []string{"torqueConfig", "moabConfig", "bye"} {
-		_, err := conn.Write(append([]byte(m), '\n'))
-		if err != nil {
-			log.Fatalf("client: write: %s", err)
-		}
-
-		term := false
-		reply := make([]byte, 4096)
-		for {
-
-			n, err := conn.Read(reply)
-
-			// Error in reading command output or io.EOF
-			if err != nil {
-				if err != io.EOF {
-					log.Error(err)
-				}
-				term = true
-				break
-			}
-
-			// Received '\a' from server indicating the end of the command output
-			if reply[n-1] == '\a' {
-				if n > 0 {
-					fmt.Printf("%s", reply[:n-1])
-				}
-				break
-			}
-
-			// Received a part of the command output
-			fmt.Printf("%s", reply[:n])
-		}
-
-		// stop sending more command if the connection has been terminated.
-		if term {
-			break
-		}
-	}
+	cli.PrintClusterConfig(*trqhelpdHost, *trqhelpdPort)
 }
