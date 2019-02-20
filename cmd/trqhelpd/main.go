@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"Donders-Institute/hpc-torque-helper/internal/netutil"
+	"github.com/Donders-Institute/hpc-torque-helper/internal/netutil"
 	log "github.com/sirupsen/logrus"
 )
 

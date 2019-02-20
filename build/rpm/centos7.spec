@@ -49,10 +49,10 @@ fi
 %build
 # create GOPATH structure within the source code
 rm -rf %{gopath}
-mkdir -p %{gopath}/src/Donders-Institute
+mkdir -p %{gopath}/src/github.com/Donders-Institute
 # copy entire directory into gopath, this duplicate the source code
-cp -R %{_builddir}/%{name}-%{version} %{gopath}/src/Donders-Institute/%{name}
-cd %{gopath}/src/Donders-Institute/%{name}; GOPATH=%{gopath} make
+cp -R %{_builddir}/%{name}-%{version} %{gopath}/src/github.com/Donders-Institute/%{name}
+cd %{gopath}/src/github.com/Donders-Institute/%{name}; GOPATH=%{gopath} make
 
 %install
 mkdir -p %{buildroot}/%{_sbindir}
