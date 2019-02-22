@@ -1,0 +1,39 @@
+syntax = "proto3";
+package grpc;
+
+import "google/protobuf/empty.proto";
+
+// JobInfoRequest defines required input for retrieving job-related information.
+message JobInfoRequest {
+    string jid = 1;
+    bool xml = 2;
+}
+
+// UserInfoRequest defines required input for retrieving user-related information.
+message UserInfoRequest {
+    string uid = 1;
+    bool xml = 2;
+}
+
+// GeneralResponse is a very simple and naive output message.
+message GeneralResponse {
+    string responseData = 1;
+    int32 exitCode = 2;
+    string errorMessage = 3; 
+}
+
+// TorqueHelperSrvService defines interfaces exported on the trqhelpd running on the PBS server.
+service TorqueHelperSrvService {
+    rpc TraceJob(JobInfoRequest) returns (GeneralResponse);
+    rpc TorqueConfig(google.protobuf.Empty) returns (GeneralResponse);
+    rpc MoabConfig(google.protobuf.Empty) returns (GeneralResponse);
+    rpc GetJobBlockReason(JobInfoRequest) returns (GeneralResponse);
+    rpc GetBlockedJobsOfUser(UserInfoRequest) returns (GeneralResponse);
+    rpc Qstat(google.protobuf.Empty) returns (GeneralResponse);
+    rpc Qstatx(google.protobuf.Empty) returns (GeneralResponse);
+}
+
+// TorqueHelperSrvService defines interfaces exported on the trqhelpd running on the PBS mom server.
+service TorqueHelperMomService {
+    rpc JobMemInfo(JobInfoRequest) returns (GeneralResponse);
+}
