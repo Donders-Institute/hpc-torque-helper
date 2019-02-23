@@ -24,6 +24,7 @@ message GeneralResponse {
 
 // TorqueHelperSrvService defines interfaces exported on the trqhelpd running on the PBS server.
 service TorqueHelperSrvService {
+    rpc Ping(google.protobuf.Empty) returns (GeneralResponse);
     rpc TraceJob(JobInfoRequest) returns (GeneralResponse);
     rpc TorqueConfig(google.protobuf.Empty) returns (GeneralResponse);
     rpc MoabConfig(google.protobuf.Empty) returns (GeneralResponse);

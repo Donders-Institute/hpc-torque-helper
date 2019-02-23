@@ -38,6 +38,12 @@ func (s *TorqueHelperSrv) validateJobID(id string) (jobFqid string, err error) {
 	return
 }
 
+// Ping returns a greeting message to the client.
+func (s *TorqueHelperSrv) Ping(ctx context.Context, in *empty.Empty) (out *pb.GeneralResponse, err error) {
+	out = &pb.GeneralResponse{ExitCode: 0, ResponseData: "Hi there!", ErrorMessage: ""}
+	return
+}
+
 // TraceJob returns job tracing logs available in the Torque server log.
 func (s *TorqueHelperSrv) TraceJob(ctx context.Context, in *pb.JobInfoRequest) (out *pb.GeneralResponse, err error) {
 
