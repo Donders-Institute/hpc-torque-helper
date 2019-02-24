@@ -17,7 +17,8 @@ update_dep: $(GOPATH)/bin/dep
 	GOPATH=$(GOPATH) GOOS=$(GOOS) $(GOPATH)/bin/dep ensure --update
 
 build: build_dep
-	GOPATH=$(GOPATH) GOOS=$(GOOS) go install -ldflags "-X main.secret=$(SECRET)" \
+	GOPATH=$(GOPATH) GOOS=$(GOOS) go install \
+	-ldflags "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.secret=$(SECRET)" \
 	github.com/Donders-Institute/hpc-torque-helper/...
 
 doc:
@@ -25,7 +26,7 @@ doc:
 
 test: build_dep
 	@GOPATH=$(GOPATH) GOOS=$(GOOS) GOCACHE=off go test \
-	-ldflags "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.testSecret=my-test-secret" \
+	-ldflags "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.secret=my-test-secret" \
 	-v github.com/Donders-Institute/hpc-torque-helper/...
 
 install: build

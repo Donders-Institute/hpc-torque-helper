@@ -76,15 +76,13 @@ func main() {
 		log.Fatalf("failed to setup tls: %v", err)
 	}
 
-	validator := pb.SecretValidator{SecretToken: secret}
-
-	log.Debugf("accepting client secret: %s\n", validator.SecretToken)
+	log.Debugf("accepting client secret: %s\n", pb.GetSecret())
 
 	opts := []grpc.ServerOption{
 		// Enable TLS for all incoming connections.
 		grpc.Creds(creds),
 		// Enable AuthInterceptor for token validation.
-		grpc.UnaryInterceptor(validator.UnaryInterceptor),
+		grpc.UnaryInterceptor(pb.UnarySecretValidator),
 	}
 
 	grpcServer := grpc.NewServer(opts...)

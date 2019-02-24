@@ -7,13 +7,10 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// SecretValidator provides gRPC interceptors for validating client secret.
-type SecretValidator struct {
-	SecretToken string
-}
+var secret string
 
-// UnaryInterceptor is an gRPC Interceptor implementing client token validation.
-func (s *SecretValidator) UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+// UnarySecretValidator is an gRPC Interceptor implementing client token validation.
+func UnarySecretValidator(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 	meta, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -22,9 +19,14 @@ func (s *SecretValidator) UnaryInterceptor(ctx context.Context, req interface{},
 	if len(meta["token"]) != 1 {
 		return nil, grpc.Errorf(codes.Unauthenticated, "invalid token")
 	}
-	if meta["token"][0] != s.SecretToken {
+	if meta["token"][0] != secret {
 		return nil, grpc.Errorf(codes.Unauthenticated, "invalid token")
 	}
 
 	return handler(ctx, req)
+}
+
+// GetSecret returns the valid secret.
+func GetSecret() string {
+	return secret
 }
