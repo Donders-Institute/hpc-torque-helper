@@ -8,5 +8,5 @@
 # $ git -C $GOPATH/src/github.com/golang/protobuf checkout v1.2.0
 # $ go install github.com/golang/protobuf/protoc-gen-go
 
-# The following command generate client and server gRPC interfaces in ../internal/grpc.pb.go
-protoc --go_out=plugins=grpc:../internal grpc.proto
+# The following command generate client and server gRPC interfaces in ../internal/grpc/grpc.pb.go
+protoc --go_out=plugins=grpc:../internal/grpc grpc.proto

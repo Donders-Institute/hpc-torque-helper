@@ -11,7 +11,7 @@ import (
 	"strings"
 	"syscall"
 
-	pb "github.com/Donders-Institute/hpc-torque-helper/internal"
+	pb "github.com/Donders-Institute/hpc-torque-helper/internal/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	log "github.com/sirupsen/logrus"
 )

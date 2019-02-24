@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	pb "github.com/Donders-Institute/hpc-torque-helper/internal"
+	pb "github.com/Donders-Institute/hpc-torque-helper/internal/grpc"
 	"github.com/Donders-Institute/hpc-torque-helper/internal/server"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -23,6 +23,9 @@ var (
 	tdir        *string
 	trqServer   *string
 	optsVerbose *bool
+
+	// secret specivied externally
+	secret string
 )
 
 func init() {
@@ -73,9 +76,22 @@ func main() {
 		log.Fatalf("failed to setup tls: %v", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.Creds(creds))
+	validator := pb.SecretValidator{SecretToken: secret}
+
+	log.Debugf("accepting client secret: %s\n", validator.SecretToken)
+
+	opts := []grpc.ServerOption{
+		// Enable TLS for all incoming connections.
+		grpc.Creds(creds),
+		// Enable AuthInterceptor for token validation.
+		grpc.UnaryInterceptor(validator.UnaryInterceptor),
+	}
+
+	grpcServer := grpc.NewServer(opts...)
 
 	srv := server.TorqueHelperSrv{TorqueServer: *trqServer}
+
 	pb.RegisterTorqueHelperSrvServiceServer(grpcServer, &srv)
+
 	grpcServer.Serve(lis)
 }

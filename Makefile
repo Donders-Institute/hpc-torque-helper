@@ -2,6 +2,8 @@ PREFIX ?= "/opt/project"
 
 GOOS ?= "linux"
 
+SECRET ?= "my-build-secret"
+
 all: build
 
 $(GOPATH)/bin/dep:
@@ -15,13 +17,16 @@ update_dep: $(GOPATH)/bin/dep
 	GOPATH=$(GOPATH) GOOS=$(GOOS) $(GOPATH)/bin/dep ensure --update
 
 build: build_dep
-	GOPATH=$(GOPATH) GOOS=$(GOOS) go install github.com/Donders-Institute/hpc-torque-helper/...
+	GOPATH=$(GOPATH) GOOS=$(GOOS) go install -ldflags "-X main.secret=$(SECRET)" \
+	github.com/Donders-Institute/hpc-torque-helper/...
 
 doc:
 	@GOPATH=$(GOPATH) GOOS=$(GOOS) godoc -http=:6060
 
 test: build_dep
-	@GOPATH=$(GOPATH) GOOS=$(GOOS) GOCACHE=off go test -v github.com/Donders-Institute/hpc-torque-helper/test/...
+	@GOPATH=$(GOPATH) GOOS=$(GOOS) GOCACHE=off go test \
+	-ldflags "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.testSecret=my-test-secret" \
+	-v github.com/Donders-Institute/hpc-torque-helper/...
 
 install: build
 	@install -D $(GOPATH)/bin/* $(PREFIX)/bin
