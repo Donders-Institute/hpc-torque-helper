@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/xml"
 	"fmt"
@@ -9,8 +10,59 @@ import (
 	"os/exec"
 	"strings"
 
+	pb "github.com/Donders-Institute/hpc-torque-helper/internal/grpc"
+	"github.com/golang/protobuf/ptypes/empty"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 )
+
+var secret string
+
+// TorqueHelperSrvClient implements client APIs for the TorqueHelperSrv service.
+type TorqueHelperSrvClient struct {
+	SrvHost     string
+	SrvPort     int
+	SrvCertFile string
+}
+
+func (c *TorqueHelperSrvClient) grpcConnect() (*grpc.ClientConn, error) {
+	creds, err := credentials.NewClientTLSFromFile(c.SrvCertFile, "")
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", c.SrvHost, c.SrvPort), grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+// Ping makes the gRPC call to the ping function on the TorqueHelperSrv service.
+func (c *TorqueHelperSrvClient) Ping() error {
+
+	conn, err := c.grpcConnect()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := pb.NewTorqueHelperSrvServiceClient(conn)
+
+	md := metadata.Pairs("token", pb.GetSecret())
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	out, err := client.Ping(ctx, &empty.Empty{})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", out.GetResponseData())
+
+	return nil
+}
 
 // PrintClusterConfig prints configurations of Torque (pbs_server) and Moab services.
 func PrintClusterConfig(trqhelpdHost string, trqhelpdPort int) {
