@@ -2,7 +2,7 @@ PREFIX ?= "/opt/project"
 
 GOOS ?= "linux"
 
-SECRET ?= "my-build-secret"
+SECRET ?= "my-secret"
 
 all: build
 
@@ -26,7 +26,7 @@ doc:
 
 test: build_dep
 	@GOPATH=$(GOPATH) GOOS=$(GOOS) GOCACHE=off go test \
-	-ldflags "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.secret=my-test-secret" \
+	-ldflags "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.secret=$(SECRET)" \
 	-v github.com/Donders-Institute/hpc-torque-helper/...
 
 install: build
