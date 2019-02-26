@@ -18,16 +18,16 @@ import (
 
 var secret string
 
-// GetSecret returns the client secret token.
-func GetSecret() string {
-	return secret
-}
-
 // TorqueHelperSrvClient implements client APIs for the TorqueHelperSrv service.
 type TorqueHelperSrvClient struct {
 	SrvHost     string
 	SrvPort     int
 	SrvCertFile string
+}
+
+// GetSecret returns the client secret token for gRPC connection.
+func (c *TorqueHelperSrvClient) GetSecret() string {
+	return pb.GetSecret()
 }
 
 // grpcConnect establishes client connection to the TorqueHelperMom service via gPRC.
