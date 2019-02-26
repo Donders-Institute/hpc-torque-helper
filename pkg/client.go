@@ -2,10 +2,8 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/xml"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -27,8 +25,9 @@ type TorqueHelperSrvClient struct {
 	SrvCertFile string
 }
 
+// grpcConnect establishes client connection to the TorqueHelperMom service via gPRC.
 func (c *TorqueHelperSrvClient) grpcConnect() (*grpc.ClientConn, error) {
-	creds, err := credentials.NewClientTLSFromFile(c.SrvCertFile, "")
+	creds, err := credentials.NewClientTLSFromFile(c.SrvCertFile, c.SrvHost)
 	if err != nil {
 		return nil, err
 	}
@@ -65,67 +64,160 @@ func (c *TorqueHelperSrvClient) Ping() error {
 }
 
 // PrintClusterConfig prints configurations of Torque (pbs_server) and Moab services.
-func PrintClusterConfig(trqhelpdHost string, trqhelpdPort int) {
+func (c *TorqueHelperSrvClient) PrintClusterConfig() error {
 
-	config := tls.Config{}
-	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", trqhelpdHost, trqhelpdPort), &config)
+	conn, err := c.grpcConnect()
 	if err != nil {
-		log.Fatalf("client: dial: %s", err)
+		return err
 	}
 	defer conn.Close()
 
-	for _, m := range []string{"torqueConfig", "moabConfig", "bye"} {
-		_, err := conn.Write(append([]byte(m), '\n'))
+	client := pb.NewTorqueHelperSrvServiceClient(conn)
+
+	md := metadata.Pairs("token", pb.GetSecret())
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	// get torque config
+	out, err := client.TorqueConfig(ctx, &empty.Empty{})
+	if err != nil {
+		return err
+	}
+	if err := printRPCOutput(out); err != nil {
+		return err
+	}
+
+	// get moab config
+	out, err = client.MoabConfig(ctx, &empty.Empty{})
+	if err != nil {
+		return err
+	}
+
+	return printRPCOutput(out)
+}
+
+// PrintClusterQstat prints all jobs in the memory of the Torque (pbs_server) service.
+func (c *TorqueHelperSrvClient) PrintClusterQstat(xml bool) error {
+	conn, err := c.grpcConnect()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := pb.NewTorqueHelperSrvServiceClient(conn)
+
+	md := metadata.Pairs("token", pb.GetSecret())
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	var out *pb.GeneralResponse
+
+	if xml {
+		out, err = client.Qstat(ctx, &empty.Empty{})
 		if err != nil {
-			log.Fatalf("client: write: %s", err)
+			return err
 		}
 
-		term := false
-		reply := make([]byte, 4096)
-		for {
-
-			n, err := conn.Read(reply)
-
-			// Error in reading command output or io.EOF
-			if err != nil {
-				if err != io.EOF {
-					log.Error(err)
-				}
-				term = true
-				break
-			}
-
-			// Received '\a' from server indicating the end of the command output
-			if reply[n-1] == '\a' {
-				if n > 0 {
-					fmt.Printf("%s", reply[:n-1])
-				}
-				break
-			}
-
-			// Received a part of the command output
-			fmt.Printf("%s", reply[:n])
-		}
-
-		// stop sending more command if the connection has been terminated.
-		if term {
-			break
+	} else {
+		out, err = client.Qstatx(ctx, &empty.Empty{})
+		if err != nil {
+			return err
 		}
 	}
+
+	return printRPCOutput(out)
+}
+
+// PrintClusterTracejob prints job tracing logs available on the Torque (pbs_server) server.
+func (c *TorqueHelperSrvClient) PrintClusterTracejob(jobID string) error {
+	conn, err := c.grpcConnect()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := pb.NewTorqueHelperSrvServiceClient(conn)
+
+	md := metadata.Pairs("token", pb.GetSecret())
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	out, err := client.TraceJob(ctx, &pb.JobInfoRequest{Jid: jobID, Xml: false})
+	if err != nil {
+		return err
+	}
+	return printRPCOutput(out)
+}
+
+// TorqueHelperMomClient implements client APIs for the TorqueHelperMom service.
+type TorqueHelperMomClient struct {
+	SrvHost     string
+	SrvPort     int
+	SrvCertFile string
+}
+
+// grpcConnect establishes client connection to the TorqueHelperMom service via gPRC.
+func (c *TorqueHelperMomClient) grpcConnect() (*grpc.ClientConn, error) {
+	creds, err := credentials.NewClientTLSFromFile(c.SrvCertFile, c.SrvHost)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", c.SrvHost, c.SrvPort), grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }
 
 // PrintJobMemoryInfo prints the memory usage of a running job.
-func PrintJobMemoryInfo(jobID string, trqhelpdPort int) {
-	// defining data structure for unmarshalling qstat's XML document
-	type Job struct {
-		JobID  string `xml:"Job_Id"`
-		Host   string `xml:"req_information>hostlist.0"`
-		Memset string `xml:"memset_string"`
+func (c *TorqueHelperMomClient) PrintJobMemoryInfo(jobID string) error {
+	jobInfo, err := getJobQstatInfo(jobID)
+	if err != nil {
+		return err
 	}
+
+	// force Mom service host to the one the job is running.
+	c.SrvHost = jobInfo.Host
+
+	conn, err := c.grpcConnect()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := pb.NewTorqueHelperMomServiceClient(conn)
+
+	md := metadata.Pairs("token", pb.GetSecret())
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	out, err := client.JobMemInfo(ctx, &pb.JobInfoRequest{Jid: jobID, Xml: false})
+	if err != nil {
+		return err
+	}
+	return printRPCOutput(out)
+}
+
+// printRPCOutput prints output from a Unary gRPC call.
+func printRPCOutput(out *pb.GeneralResponse) error {
+	if out.GetExitCode() != 0 {
+		return fmt.Errorf("grpc server process error: %+v (ec=%d)", out.GetErrorMessage(), out.GetExitCode())
+	}
+	fmt.Printf("%s\n", out.GetResponseData())
+	return nil
+}
+
+// JobInfo contains information of the cluster job retrived from the `qstat -x` command.
+type JobInfo struct {
+	JobID  string `xml:"Job_Id"`
+	Host   string `xml:"req_information>hostlist.0"`
+	Memset string `xml:"memset_string"`
+}
+
+// getJobQstatInfo gets job information using `qstat -x` command directory.
+func getJobQstatInfo(jobID string) (*JobInfo, error) {
 
 	type Data struct {
 		XMLName xml.Name `xml:"Data"`
-		Job     Job
+		JobInfo JobInfo
 	}
 
 	// get the job's execution host
@@ -133,182 +225,23 @@ func PrintJobMemoryInfo(jobID string, trqhelpdPort int) {
 	cmd.Env = os.Environ()
 	b, err := cmd.Output()
 	if err != nil {
-		log.Fatalf("cannot get job's execution host: %s", err)
+		return nil, fmt.Errorf("cannot get job's execution host: %s", err)
 	}
 	log.Debug(string(b))
 
 	data := Data{}
 	if err := xml.Unmarshal(b, &data); err != nil {
-		log.Fatalf("cannot get job's execution host: %v", err)
+		return nil, fmt.Errorf("cannot get job's execution host: %v", err)
 	}
 
 	// remove the eventual node attributes concatenated to the node's hostname with ":"
-	data.Job.Host = strings.Split(data.Job.Host, ":")[0]
-	log.Debugf("job data parsed from XML: %+v", data.Job)
+	data.JobInfo.Host = strings.Split(data.JobInfo.Host, ":")[0]
+	log.Debugf("job data parsed from XML: %+v", data.JobInfo)
 
-	jdata := strings.Split(data.Job.Memset, ":")
+	jdata := strings.Split(data.JobInfo.Memset, ":")
 	if jdata[0] == "" {
-		log.Fatalf("Invalid job's execution host: %+v", data.Job)
+		return nil, fmt.Errorf("Invalid job's execution host: %+v", data.JobInfo)
 	}
 
-	config := tls.Config{}
-	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", jdata[0], trqhelpdPort), &config)
-	if err != nil {
-		log.Fatalf("client: dial: %s", err)
-	}
-	defer conn.Close()
-
-	cmds := []string{
-		fmt.Sprintf("jobMemInfo++++%s", data.Job.JobID),
-		"bye",
-	}
-
-	for _, m := range cmds {
-		_, err := conn.Write(append([]byte(m), '\n'))
-		if err != nil {
-			log.Fatalf("client: write: %s", err)
-		}
-
-		term := false
-		reply := make([]byte, 4096)
-		for {
-
-			n, err := conn.Read(reply)
-
-			// Error in reading command output or io.EOF
-			if err != nil {
-				if err != io.EOF {
-					log.Error(err)
-				}
-				term = true
-				break
-			}
-
-			// Received '\a' from server indicating the end of the command output
-			if reply[n-1] == '\a' {
-				if n > 0 {
-					fmt.Printf("%s", reply[:n-1])
-				}
-				break
-			}
-
-			// Received a part of the command output
-			fmt.Printf("%s", reply[:n])
-		}
-
-		// stop sending more command if the connection has been terminated.
-		if term {
-			break
-		}
-	}
-}
-
-// PrintClusterQstat prints all jobs in the memory of the Torque (pbs_server) service.
-func PrintClusterQstat(trqhelpdHost string, trqhelpdPort int, xml bool) {
-	config := tls.Config{}
-
-	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", trqhelpdHost, trqhelpdPort), &config)
-	if err != nil {
-		log.Fatalf("client: dial: %s", err)
-	}
-	defer conn.Close()
-
-	cmd := "clusterQstat"
-	if xml {
-		cmd += "X"
-	}
-
-	for _, m := range []string{cmd, "bye"} {
-		_, err := conn.Write(append([]byte(m), '\n'))
-		if err != nil {
-			log.Fatalf("client: write: %s", err)
-		}
-
-		term := false
-		reply := make([]byte, 4096)
-		for {
-
-			n, err := conn.Read(reply)
-
-			// Error in reading command output or io.EOF
-			if err != nil {
-				if err != io.EOF {
-					log.Error(err)
-				}
-				term = true
-				break
-			}
-
-			// Received '\a' from server indicating the end of the command output
-			if reply[n-1] == '\a' {
-				if n > 0 {
-					fmt.Printf("%s", reply[:n-1])
-				}
-				break
-			}
-
-			// Received a part of the command output
-			fmt.Printf("%s", reply[:n])
-		}
-
-		// stop sending more command if the connection has been terminated.
-		if term {
-			break
-		}
-	}
-}
-
-// PrintClusterTracejob prints job tracing logs available on the Torque (pbs_server) server.
-func PrintClusterTracejob(jobID string, trqhelpdHost string, trqhelpdPort int) {
-
-	config := tls.Config{}
-	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", trqhelpdHost, trqhelpdPort), &config)
-	if err != nil {
-		log.Fatalf("client: dial: %s", err)
-	}
-	defer conn.Close()
-
-	cmds := []string{
-		fmt.Sprintf("traceJob++++%s", jobID),
-		"bye",
-	}
-
-	for _, m := range cmds {
-		_, err := conn.Write(append([]byte(m), '\n'))
-		if err != nil {
-			log.Fatalf("client: write: %s", err)
-		}
-
-		term := false
-		reply := make([]byte, 4096)
-		for {
-
-			n, err := conn.Read(reply)
-
-			// Error in reading command output or io.EOF
-			if err != nil {
-				if err != io.EOF {
-					log.Error(err)
-				}
-				term = true
-				break
-			}
-
-			// Received '\a' from server indicating the end of the command output
-			if reply[n-1] == '\a' {
-				if n > 0 {
-					fmt.Printf("%s", reply[:n-1])
-				}
-				break
-			}
-
-			// Received a part of the command output
-			fmt.Printf("%s", reply[:n])
-		}
-
-		// stop sending more command if the connection has been terminated.
-		if term {
-			break
-		}
-	}
+	return &data.JobInfo, nil
 }
