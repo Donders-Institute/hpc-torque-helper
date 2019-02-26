@@ -18,6 +18,11 @@ import (
 
 var secret string
 
+// GetSecret returns the client secret token for gRPC connection.
+func GetSecret() string {
+	return secret
+}
+
 // TorqueHelperSrvClient implements client APIs for the TorqueHelperSrv service.
 type TorqueHelperSrvClient struct {
 	SrvHost     string
@@ -38,11 +43,6 @@ func (c *TorqueHelperSrvClient) grpcConnect() (*grpc.ClientConn, error) {
 	}
 
 	return conn, nil
-}
-
-// GetSecret returns the client secret token for gRPC connection.
-func (c *TorqueHelperSrvClient) GetSecret() string {
-	return pb.GetSecret()
 }
 
 // Ping makes the gRPC call to the ping function on the TorqueHelperSrv service.
