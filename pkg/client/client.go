@@ -18,6 +18,11 @@ import (
 
 var secret string
 
+// GetSecret returns the client secret token.
+func GetSecret() string {
+	return secret
+}
+
 // TorqueHelperSrvClient implements client APIs for the TorqueHelperSrv service.
 type TorqueHelperSrvClient struct {
 	SrvHost     string
