@@ -32,9 +32,8 @@ func (s *TorqueHelperSrv) Ping(ctx context.Context, in *empty.Empty) (out *pb.Ge
 
 // TraceJob returns job tracing logs available in the Torque server log.
 func (s *TorqueHelperSrv) TraceJob(ctx context.Context, in *pb.JobInfoRequest) (out *pb.GeneralResponse, err error) {
-	jobFqid, verr := validateJobID(in.GetJid(), s.TorqueServer)
-	if verr != nil {
-		err = verr
+	jobFqid, err := validateJobID(in.GetJid(), s.TorqueServer)
+	if err != nil {
 		return
 	}
 
@@ -117,9 +116,8 @@ type TorqueHelperMom struct {
 // The job must has a running process on the node the TorqueHelpMom service is running.
 func (s *TorqueHelperMom) JobMemInfo(ctx context.Context, in *pb.JobInfoRequest) (out *pb.GeneralResponse, err error) {
 
-	jobFqid, verr := validateJobID(in.GetJid(), s.TorqueServer)
-	if verr != nil {
-		err = verr
+	jobFqid, err := validateJobID(in.GetJid(), s.TorqueServer)
+	if err != nil {
 		return
 	}
 

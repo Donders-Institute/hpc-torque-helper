@@ -199,7 +199,7 @@ func (c *TorqueHelperMomClient) PrintJobMemoryInfo(jobID string) error {
 // printRPCOutput prints output from a Unary gRPC call.
 func printRPCOutput(out *pb.GeneralResponse) error {
 	if out.GetExitCode() != 0 {
-		return fmt.Errorf("grpc server process error: %+v (ec=%d)", out.GetErrorMessage(), out.GetExitCode())
+		return fmt.Errorf("grpc server process error: %s (ec=%d)", out.GetErrorMessage(), out.GetExitCode())
 	}
 	fmt.Printf("%s\n", out.GetResponseData())
 	return nil
