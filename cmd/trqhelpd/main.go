@@ -82,7 +82,7 @@ func main() {
 		// Enable TLS for all incoming connections.
 		grpc.Creds(creds),
 		// Enable AuthInterceptor for token validation.
-		grpc.UnaryInterceptor(pb.UnarySecretValidator),
+		//grpc.UnaryInterceptor(pb.UnarySecretValidator),
 	}
 
 	grpcServer := grpc.NewServer(opts...)

@@ -16,13 +16,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var secret string
-
-// GetSecret returns the client secret token for gRPC connection.
-func GetSecret() string {
-	return secret
-}
-
 // TorqueHelperSrvClient implements client APIs for the TorqueHelperSrv service.
 type TorqueHelperSrvClient struct {
 	SrvHost     string
