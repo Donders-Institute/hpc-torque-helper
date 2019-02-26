@@ -87,9 +87,16 @@ func main() {
 
 	grpcServer := grpc.NewServer(opts...)
 
-	srv := server.TorqueHelperSrv{TorqueServer: *trqServer}
-
-	pb.RegisterTorqueHelperSrvServiceServer(grpcServer, &srv)
+	switch *role {
+	case "SRV":
+		srv := server.TorqueHelperSrv{TorqueServer: *trqServer}
+		pb.RegisterTorqueHelperSrvServiceServer(grpcServer, &srv)
+	case "MOM":
+		srv := server.TorqueHelperMom{TorqueServer: *trqServer}
+		pb.RegisterTorqueHelperMomServiceServer(grpcServer, &srv)
+	default:
+		log.Fatalf("unknown service role: %s\n", *role)
+	}
 
 	grpcServer.Serve(lis)
 }
