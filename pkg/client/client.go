@@ -25,11 +25,6 @@ type TorqueHelperSrvClient struct {
 	SrvCertFile string
 }
 
-// GetSecret returns the client secret token for gRPC connection.
-func (c *TorqueHelperSrvClient) GetSecret() string {
-	return pb.GetSecret()
-}
-
 // grpcConnect establishes client connection to the TorqueHelperMom service via gPRC.
 func (c *TorqueHelperSrvClient) grpcConnect() (*grpc.ClientConn, error) {
 	creds, err := credentials.NewClientTLSFromFile(c.SrvCertFile, c.SrvHost)
@@ -43,6 +38,11 @@ func (c *TorqueHelperSrvClient) grpcConnect() (*grpc.ClientConn, error) {
 	}
 
 	return conn, nil
+}
+
+// GetSecret returns the client secret token for gRPC connection.
+func (c *TorqueHelperSrvClient) GetSecret() string {
+	return pb.GetSecret()
 }
 
 // Ping makes the gRPC call to the ping function on the TorqueHelperSrv service.
