@@ -20,3 +20,15 @@ func TestSrvPing(t *testing.T) {
 		t.Errorf("fail to ping: %+v\n", err)
 	}
 }
+
+func TestSrvPrintClusterQstat(t *testing.T) {
+	if err := srvClient.PrintClusterQstat(true); err != nil {
+		t.Errorf("fail to print qstat: %+v\n", err)
+	}
+}
+
+func TestSrvPrintClusterConfig(t *testing.T) {
+	if err := srvClient.PrintClusterConfig(); err != nil {
+		t.Errorf("fail to print cluster status: %+v\n", err)
+	}
+}
