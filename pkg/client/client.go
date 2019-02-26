@@ -109,13 +109,13 @@ func (c *TorqueHelperSrvClient) PrintClusterQstat(xml bool) error {
 	var out *pb.GeneralResponse
 
 	if xml {
-		out, err = client.Qstat(ctx, &empty.Empty{})
+		out, err = client.Qstatx(ctx, &empty.Empty{})
 		if err != nil {
 			return err
 		}
 
 	} else {
-		out, err = client.Qstatx(ctx, &empty.Empty{})
+		out, err = client.Qstat(ctx, &empty.Empty{})
 		if err != nil {
 			return err
 		}
