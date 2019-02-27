@@ -1,6 +1,7 @@
 package client
 
 import (
+	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -30,5 +31,19 @@ func TestSrvPrintClusterQstat(t *testing.T) {
 func TestSrvPrintClusterConfig(t *testing.T) {
 	if err := srvClient.PrintClusterConfig(); err != nil {
 		t.Errorf("fail to print cluster status: %+v\n", err)
+	}
+}
+
+func TestParseQstatXML(t *testing.T) {
+	xmldata, err := ioutil.ReadFile(path.Join(os.Getenv("GOPATH"), "src/github.com/Donders-Institute/hpc-torque-helper/test/data/qstat.xml"))
+	if err != nil {
+		t.Errorf("fail to read XML data from test file.\n")
+	}
+	jobinfo, err := parseQstatXML(xmldata)
+	if err != nil {
+		t.Errorf("fail parsing XML data: %+v\n", err)
+	}
+	if jobinfo.JobID != "34854814.dccn-l029.dccn.nl" || jobinfo.Host != "dccn-c360.dccn.nl" {
+		t.Errorf("unexpected data: %+v\n", jobinfo)
 	}
 }

@@ -168,7 +168,13 @@ func (c *TorqueHelperMomClient) grpcConnect() (*grpc.ClientConn, error) {
 
 // PrintJobMemoryInfo prints the memory usage of a running job.
 func (c *TorqueHelperMomClient) PrintJobMemoryInfo(jobID string) error {
-	jobInfo, err := getJobQstatInfo(jobID)
+
+	xmldata, err := jobQstatXML(jobID)
+	if err != nil {
+		return err
+	}
+
+	jobInfo, err := parseQstatXML(xmldata)
 	if err != nil {
 		return err
 	}
@@ -191,6 +197,7 @@ func (c *TorqueHelperMomClient) PrintJobMemoryInfo(jobID string) error {
 	if err != nil {
 		return err
 	}
+
 	return printRPCOutput(out)
 }
 
@@ -210,36 +217,32 @@ type Job struct {
 	Memset string `xml:"memset_string"`
 }
 
-// getJobQstatInfo gets job information using `qstat -x` command directory.
-func getJobQstatInfo(jobID string) (*Job, error) {
+// jobQstatXML runs `qstat -x` locally to get the full job information in XML format.
+func jobQstatXML(jobID string) (xmlData []byte, err error) {
+	cmd := exec.Command("qstat", "-x", jobID)
+	cmd.Env = os.Environ()
+	xmlData, err = cmd.Output()
+	if err != nil {
+		return
+	}
+	return
+}
 
-	type Data struct {
+// parseQstatXML parses the output of `qstat -x` and returns the Job data structure.
+func parseQstatXML(xmlData []byte) (*Job, error) {
+	type data struct {
 		XMLName xml.Name `xml:"Data"`
 		Job     Job
 	}
 
-	// get the job's execution host
-	cmd := exec.Command("qstat", "-x", jobID)
-	cmd.Env = os.Environ()
-	b, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("cannot get job's execution host: %s", err)
-	}
-	log.Debug(string(b))
-
-	data := Data{}
-	if err := xml.Unmarshal(b, &data); err != nil {
+	d := data{}
+	if err := xml.Unmarshal(xmlData, &d); err != nil {
 		return nil, fmt.Errorf("cannot get job's execution host: %v", err)
 	}
 
 	// remove the eventual node attributes concatenated to the node's hostname with ":"
-	data.Job.Host = strings.Split(data.Job.Host, ":")[0]
-	log.Debugf("job data parsed from XML: %+v", data.Job)
+	d.Job.Host = strings.Split(d.Job.Host, ":")[0]
+	log.Debugf("job data parsed from XML: %+v", d.Job)
 
-	jdata := strings.Split(data.Job.Memset, ":")
-	if jdata[0] == "" {
-		return nil, fmt.Errorf("Invalid job's execution host: %+v", data.Job)
-	}
-
-	return &data.Job, nil
+	return &d.Job, nil
 }
