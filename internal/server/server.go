@@ -1,21 +1,18 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/user"
 	"path"
 	"regexp"
 	"strings"
-	"syscall"
 
 	pb "github.com/Donders-Institute/hpc-torque-helper/internal/grpc"
+	sys "github.com/Donders-Institute/hpc-torque-helper/internal/sys"
 	"github.com/golang/protobuf/ptypes/empty"
-	log "github.com/sirupsen/logrus"
 )
 
 // TorqueHelperSrv implements the gRPC interfaces exported by the TorqueHelper service running on the Torque/Moab server.
@@ -37,7 +34,7 @@ func (s *TorqueHelperSrv) TraceJob(ctx context.Context, in *pb.JobInfoRequest) (
 		return
 	}
 
-	stdout, stderr, ec := execCmd("tracejob", []string{"-n", "3", jobFqid})
+	stdout, stderr, ec := sys.ExecCmd("tracejob", []string{"-n", "3", jobFqid})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 
 	return
@@ -46,7 +43,7 @@ func (s *TorqueHelperSrv) TraceJob(ctx context.Context, in *pb.JobInfoRequest) (
 // TorqueConfig returns the configuration of the Torque server retrieved via 'qmgr' command.
 func (s *TorqueHelperSrv) TorqueConfig(ctx context.Context, in *empty.Empty) (out *pb.GeneralResponse, err error) {
 
-	stdout, stderr, ec := execCmd("qmgr", []string{"-c", "print server"})
+	stdout, stderr, ec := sys.ExecCmd("qmgr", []string{"-c", "print server"})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 
 	return
@@ -61,7 +58,7 @@ func (s *TorqueHelperSrv) MoabConfig(ctx context.Context, in *empty.Empty) (out 
 		moabDir = "/usr/local/moab"
 	}
 
-	stdout, stderr, ec := execCmd("cat", []string{path.Join(moabDir, "etc", "moab.cfg")})
+	stdout, stderr, ec := sys.ExecCmd("cat", []string{path.Join(moabDir, "etc", "moab.cfg")})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 
 	return
@@ -75,7 +72,7 @@ func (s *TorqueHelperSrv) GetJobBlockReason(ctx context.Context, in *pb.JobInfoR
 		return
 	}
 
-	stdout, stderr, ec := execCmd("checkjob", []string{"--xml", jobFqid})
+	stdout, stderr, ec := sys.ExecCmd("checkjob", []string{"--xml", jobFqid})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 
 	return
@@ -86,7 +83,7 @@ func (s *TorqueHelperSrv) GetBlockedJobsOfUser(ctx context.Context, in *pb.UserI
 	if err = validateUserID(in.GetUid()); err != nil {
 		return
 	}
-	stdout, stderr, ec := execCmd("showq", []string{"-b", "--xml", "-w", fmt.Sprintf("user=%s", in.GetUid())})
+	stdout, stderr, ec := sys.ExecCmd("showq", []string{"-b", "--xml", "-w", fmt.Sprintf("user=%s", in.GetUid())})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 
 	return
@@ -94,14 +91,14 @@ func (s *TorqueHelperSrv) GetBlockedJobsOfUser(ctx context.Context, in *pb.UserI
 
 // Qstat returns an tabular overview of all jobs in the memory of the Torque server.
 func (s *TorqueHelperSrv) Qstat(ctx context.Context, in *empty.Empty) (out *pb.GeneralResponse, err error) {
-	stdout, stderr, ec := execCmd("qstat", []string{"-a", "-t", "-G", "-n", "-1"})
+	stdout, stderr, ec := sys.ExecCmd("qstat", []string{"-a", "-t", "-G", "-n", "-1"})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 	return
 }
 
 // Qstatx returns XML output of all jobs in the memory of the Torque server.
 func (s *TorqueHelperSrv) Qstatx(ctx context.Context, in *empty.Empty) (out *pb.GeneralResponse, err error) {
-	stdout, stderr, ec := execCmd("qstat", []string{"-x"})
+	stdout, stderr, ec := sys.ExecCmd("qstat", []string{"-x"})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 	return
 }
@@ -121,7 +118,7 @@ func (s *TorqueHelperMom) JobMemInfo(ctx context.Context, in *pb.JobInfoRequest)
 		return
 	}
 
-	stdout, stderr, ec := execCmd("cgget",
+	stdout, stderr, ec := sys.ExecCmd("cgget",
 		[]string{"-r", "memory.usage_in_bytes", "-r", "memory.max_usage_in_bytes", fmt.Sprintf("torque/%s", jobFqid)})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 
@@ -131,25 +128,6 @@ func (s *TorqueHelperMom) JobMemInfo(ctx context.Context, in *pb.JobInfoRequest)
 // validateUserID checks if the given user id is a valid system user.
 func validateUserID(id string) (err error) {
 	_, err = user.Lookup(id)
-	return
-}
-
-func execCmd(cmdName string, cmdArgs []string) (stdout, stderr bytes.Buffer, ec int32) {
-	// Execute command and catch the stdout and stderr as byte buffer.
-	cmd := exec.Command(cmdName, cmdArgs...)
-	cmd.Env = os.Environ()
-	cmd.Stderr = &stderr
-	cmd.Stdout = &stdout
-	ec = 0
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-		if exitError, ok := err.(*exec.ExitError); ok {
-			ws := exitError.Sys().(syscall.WaitStatus)
-			ec = int32(ws.ExitStatus())
-		} else {
-			ec = 1
-		}
-	}
 	return
 }
 

@@ -1,12 +1,13 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/xml"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
+
+	"github.com/Donders-Institute/hpc-torque-helper/internal/sys"
 
 	pb "github.com/Donders-Institute/hpc-torque-helper/internal/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -219,12 +220,14 @@ type Job struct {
 
 // jobQstatXML runs `qstat -x` locally to get the full job information in XML format.
 func jobQstatXML(jobID string) (xmlData []byte, err error) {
-	cmd := exec.Command("qstat", "-x", jobID)
-	cmd.Env = os.Environ()
-	xmlData, err = cmd.Output()
-	if err != nil {
+
+	var stdout, stderr bytes.Buffer
+	stdout, stderr, ec := sys.ExecCmd("qstat", []string{"-x", jobID})
+	if ec != 0 {
+		err = fmt.Errorf("%s: (ec=%d)", string(stderr.Bytes()), ec)
 		return
 	}
+	xmlData = stdout.Bytes()
 	return
 }
 
