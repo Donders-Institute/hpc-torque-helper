@@ -203,19 +203,19 @@ func printRPCOutput(out *pb.GeneralResponse) error {
 	return nil
 }
 
-// JobInfo contains information of the cluster job retrived from the `qstat -x` command.
-type JobInfo struct {
+// Job contains information of the cluster job retrived from the `qstat -x` command.
+type Job struct {
 	JobID  string `xml:"Job_Id"`
 	Host   string `xml:"req_information>hostlist.0"`
 	Memset string `xml:"memset_string"`
 }
 
 // getJobQstatInfo gets job information using `qstat -x` command directory.
-func getJobQstatInfo(jobID string) (*JobInfo, error) {
+func getJobQstatInfo(jobID string) (*Job, error) {
 
 	type Data struct {
 		XMLName xml.Name `xml:"Data"`
-		JobInfo JobInfo
+		Job     Job
 	}
 
 	// get the job's execution host
@@ -233,13 +233,13 @@ func getJobQstatInfo(jobID string) (*JobInfo, error) {
 	}
 
 	// remove the eventual node attributes concatenated to the node's hostname with ":"
-	data.JobInfo.Host = strings.Split(data.JobInfo.Host, ":")[0]
-	log.Debugf("job data parsed from XML: %+v", data.JobInfo)
+	data.Job.Host = strings.Split(data.Job.Host, ":")[0]
+	log.Debugf("job data parsed from XML: %+v", data.Job)
 
-	jdata := strings.Split(data.JobInfo.Memset, ":")
+	jdata := strings.Split(data.Job.Memset, ":")
 	if jdata[0] == "" {
-		return nil, fmt.Errorf("Invalid job's execution host: %+v", data.JobInfo)
+		return nil, fmt.Errorf("Invalid job's execution host: %+v", data.Job)
 	}
 
-	return &data.JobInfo, nil
+	return &data.Job, nil
 }
