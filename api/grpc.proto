@@ -38,3 +38,19 @@ service TorqueHelperSrvService {
 service TorqueHelperMomService {
     rpc JobMemInfo(JobInfoRequest) returns (GeneralResponse);
 }
+
+// ServerListResponse returns a list of server instances.  Each server instance has identifier and owner.
+message ServerListResponse {
+    message Server {
+        string id = 1;
+        string owner = 2;
+    }
+    int32 exitCode = 1;
+    string errorMessage = 2;
+    repeated Server servers = 3;
+}
+
+// TorqueHelperAccService defines interfaces exported on the trqhelpd running on the hpc cluster's access node.
+service TorqueHelperAccService {
+    rpc GetVNCServers(google.protobuf.Empty) returns (ServerListResponse);
+}

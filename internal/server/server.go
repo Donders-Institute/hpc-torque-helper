@@ -1,9 +1,11 @@
 package server
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/user"
 	"path"
@@ -121,6 +123,45 @@ func (s *TorqueHelperMom) JobMemInfo(ctx context.Context, in *pb.JobInfoRequest)
 	stdout, stderr, ec := sys.ExecCmd("cgget",
 		[]string{"-r", "memory.usage_in_bytes", "-r", "memory.max_usage_in_bytes", fmt.Sprintf("torque/%s", jobFqid)})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
+
+	return
+}
+
+// TorqueHelperAcc implements the gRPC interfaces exported by the TorqueHelper service running on the access node of the Torque cluster.
+type TorqueHelperAcc struct {
+}
+
+// GetVNCServers gets the VNC servers running on the server's local.
+func (s *TorqueHelperAcc) GetVNCServers(ctx context.Context, in *empty.Empty) (out *pb.ServerListResponse, err error) {
+
+	stdout, stderr, ec := sys.ExecCmd("ps", []string{"hu", "-C", "Xvnc"})
+
+	out = &pb.ServerListResponse{ExitCode: ec, ErrorMessage: stderr.String()}
+
+	if ec == 0 {
+		for {
+			l, err := stdout.ReadString('\n')
+			if err != nil && err != io.EOF {
+				// stop reading the stdout buffer in the raised error is not io.EOF
+				break
+			}
+			// parse the line and get the 1st and 12th field
+			scanner := bufio.NewScanner(strings.NewReader(l))
+			scanner.Split(bufio.ScanWords)
+			var cols []string
+			for scanner.Scan() {
+				cols = append(cols, scanner.Text())
+			}
+			if err := scanner.Err(); err != nil {
+				continue
+			}
+			if len(cols) < 12 {
+				continue
+			}
+			s := &pb.ServerListResponse_Server{Id: cols[11], Owner: cols[0]}
+			out.Servers = append(out.Servers, s)
+		}
+	}
 
 	return
 }

@@ -1,0 +1,14 @@
+[Unit]
+Description=Torque Helper Service for access node
+After=pbs_mom network.target rsyslog.target local-fs.target
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile=-/etc/sysconfig/trqhelpd_acc
+ExecStart=/usr/sbin/trqhelpd -h 0.0.0.0 -p 60209
+StandardOutput=syslog
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

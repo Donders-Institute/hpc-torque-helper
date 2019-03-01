@@ -34,11 +34,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fde12c4da6237363bf36b81b59aa36a43d28061167ec4acb0d41fc49464e28b9"
+  digest = "1:058e9504b9a79bfe86092974d05bb3298d2aa0c312d266d43148de289a5065d9"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "7f87c0fbb88b590338857bcb720678c2583d4dea"
+  revision = "8dd112bcdc25174059e45e07517d9fc663123347"
 
 [[projects]]
   branch = "master"
@@ -54,18 +54,18 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "312bce6e941fc7e152b630a8643ea239afc12ddd"
+  revision = "92fc7df08ae7536330f5a21328292abfa70520a8"
 
 [[projects]]
   branch = "master"
-  digest = "1:80200f57d482f61334a482a046ddedbad77c04dbec6ab81a4e1b3c6adbdfadef"
+  digest = "1:c65bd2920426dabbd19ea6a3e54ff8475fa930935ba58d23e8db49c142648279"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "775f8194d0f9e65c46913c7be783d3d95a29333c"
+  revision = "a34e9553db1e492c9a76e60db2296ae7e5fbb772"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -96,7 +96,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "fc2db5cae922db113989ef87b5b859cc8a179f59"
+  revision = "4f5b463f9597cbe0dd13a6a2cd4f85e788d27508"
 
 [[projects]]
   digest = "1:cbc746de4662c66fd24a037501bd65aa0f8ad0bfca0c92576e0abb88864e3741"

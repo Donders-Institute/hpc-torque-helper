@@ -29,6 +29,11 @@ Summary: the server component of the %{name} for the pbs_mom node
 %description server-mom
 The server interfacing the pbs_mom node to deliver job information to the client.
 
+%package server-acc
+Summary: the server component of the %{name} for the cluster access node
+%description server-acc
+The server interfacing with the torque cluster's access node to retrieve and deliver information to the client.
+
 %prep
 %setup -q
 
@@ -44,6 +49,13 @@ if [ $1 -eq 0 ]; then
     echo "stopping service trqhelpd_mom ..." 
     systemctl stop trqhelpd_mom.service
     systemctl disable trqhelpd_mom.service
+fi
+
+%preun server-acc
+if [ $1 -eq 0 ]; then
+    echo "stopping service trqhelpd_acc ..." 
+    systemctl stop trqhelpd_acc.service
+    systemctl disable trqhelpd_acc.service
 fi
 
 %build
@@ -67,6 +79,9 @@ install -m 644 scripts/trqhelpd_srv.env %{buildroot}/etc/sysconfig/trqhelpd_srv
 ## install files for trqhelpd_mom service
 install -m 644 scripts/trqhelpd_mom.service %{buildroot}/usr/lib/systemd/system/trqhelpd_mom.service
 install -m 644 scripts/trqhelpd_mom.env %{buildroot}/etc/sysconfig/trqhelpd_mom
+## install files for trqhelpd_acc service
+install -m 644 scripts/trqhelpd_acc.service %{buildroot}/usr/lib/systemd/system/trqhelpd_acc.service
+install -m 644 scripts/trqhelpd_acc.env %{buildroot}/etc/sysconfig/trqhelpd_acc
 
 %files server-srv
 %{_sbindir}/trqhelpd
@@ -77,6 +92,11 @@ install -m 644 scripts/trqhelpd_mom.env %{buildroot}/etc/sysconfig/trqhelpd_mom
 %{_sbindir}/trqhelpd
 /usr/lib/systemd/system/trqhelpd_mom.service
 /etc/sysconfig/trqhelpd_mom
+
+%files server-acc
+%{_sbindir}/trqhelpd
+/usr/lib/systemd/system/trqhelpd_acc.service
+/etc/sysconfig/trqhelpd_acc
 
 %post server-srv
 echo "enabling service trqhelpd_srv ..."
@@ -94,12 +114,25 @@ echo "starting service trqhelpd_mom ..."
 systemctl stop trqhelpd_mom.service
 systemctl start trqhelpd_mom.service
 
+%post server-acc
+echo "enabling service trqhelpd_ac ..."
+systemctl daemon-reload
+systemctl enable trqhelpd_acc.service
+echo "starting service trqhelpd_acc ..."
+systemctl stop trqhelpd_acc.service
+systemctl start trqhelpd_acc.service
+
 %postun server-srv
 if [ $1 -eq 0 ]; then
     systemctl daemon-reload
 fi
 
 %postun server-mom
+if [ $1 -eq 0 ]; then
+    systemctl daemon-reload
+fi
+
+%postun server-acc
 if [ $1 -eq 0 ]; then
     systemctl daemon-reload
 fi

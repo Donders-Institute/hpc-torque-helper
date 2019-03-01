@@ -202,6 +202,61 @@ func (c *TorqueHelperMomClient) PrintJobMemoryInfo(jobID string) error {
 	return printRPCOutput(out)
 }
 
+// TorqueHelperAccClient implements client APIs for the TorqueHelperAcc service.
+type TorqueHelperAccClient struct {
+	SrvHost     string
+	SrvPort     int
+	SrvCertFile string
+}
+
+// grpcConnect establishes client connection to the TorqueHelperMom service via gPRC.
+func (c *TorqueHelperAccClient) grpcConnect() (*grpc.ClientConn, error) {
+	creds, err := credentials.NewClientTLSFromFile(c.SrvCertFile, c.SrvHost)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", c.SrvHost, c.SrvPort), grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+// VNCServer defines data structure of a VNC server.
+type VNCServer struct {
+	// ID is the VNC server id, e.g. mentat001.dccn.nl:1
+	ID string
+	// Owner is the VNC server owner's user id
+	Owner string
+}
+
+// GetVNCServers gets a list of VNC servers.
+func (c *TorqueHelperAccClient) GetVNCServers() (servers []VNCServer, err error) {
+
+	conn, err := c.grpcConnect()
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	client := pb.NewTorqueHelperAccServiceClient(conn)
+
+	md := metadata.Pairs("token", pb.GetSecret())
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	out, err := client.GetVNCServers(ctx, &empty.Empty{})
+	if err != nil {
+		return
+	}
+	for _, s := range out.GetServers() {
+		servers = append(servers, VNCServer{ID: fmt.Sprintf("%s%s", c.SrvHost, s.GetId()), Owner: s.GetOwner()})
+	}
+
+	return
+}
+
 // printRPCOutput prints output from a Unary gRPC call.
 func printRPCOutput(out *pb.GeneralResponse) error {
 	if out.GetExitCode() != 0 {
