@@ -52,5 +52,5 @@ message ServerListResponse {
 
 // TorqueHelperAccService defines interfaces exported on the trqhelpd running on the hpc cluster's access node.
 service TorqueHelperAccService {
-    rpc GetVNCServers(google.protobuf.Empty) returns (ServerListResponse);
+    rpc GetVNCServers(google.protobuf.Empty) returns (GeneralResponse);
 }

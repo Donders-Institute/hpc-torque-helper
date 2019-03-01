@@ -247,14 +247,17 @@ func (c *TorqueHelperAccClient) GetVNCServers() (servers []VNCServer, err error)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
 
 	out, err := client.GetVNCServers(ctx, &empty.Empty{})
-	if err != nil {
-		return
-	}
-	for _, s := range out.GetServers() {
-		servers = append(servers, VNCServer{ID: fmt.Sprintf("%s%s", c.SrvHost, s.GetId()), Owner: s.GetOwner()})
-	}
 
-	return
+	return nil, printRPCOutput(out)
+
+	// if err != nil {
+	// 	return
+	// }
+	// for _, s := range out.GetServers() {
+	// 	servers = append(servers, VNCServer{ID: fmt.Sprintf("%s%s", c.SrvHost, s.GetId()), Owner: s.GetOwner()})
+	// }
+
+	//return
 }
 
 // printRPCOutput prints output from a Unary gRPC call.
