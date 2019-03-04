@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/xml"
@@ -248,16 +249,44 @@ func (c *TorqueHelperAccClient) GetVNCServers() (servers []VNCServer, err error)
 
 	out, err := client.GetVNCServers(ctx, &empty.Empty{})
 
-	return nil, printRPCOutput(out)
+	if err != nil {
+		return nil, printRPCOutput(out)
+	}
 
-	// if err != nil {
-	// 	return
-	// }
-	// for _, s := range out.GetServers() {
-	// 	servers = append(servers, VNCServer{ID: fmt.Sprintf("%s%s", c.SrvHost, s.GetId()), Owner: s.GetOwner()})
-	// }
+	// The code below parses output to VNCServer object.  An example output is below:
+	//
+	// user1    2056  0.0  0.3 256168 55692 pts/1    Sl   Jan10   1:40 /usr/bin/Xvnc :4 -geometry 1440x900 -listen tcp -auth /home/g1/user1/.Xauthority -desktop vnchost:4 (user1) -fp catalogue:/etc/X11/fontpath.d -pn -rfbauth /home/g1/user1/.vnc/passwd -rfbport 5904 -rfbwait 30000 -listen tcp -x509key /root/vnc/server.pem -x509cert /root/vnc/server.crt
+	//
+	// user1   13605  0.0  0.4 272396 67084 ?        Sl    2018   6:08 /usr/bin/Xvnc :3 -geometry 1440x900 -listen tcp -auth /home/g1/user1/.Xauthority -desktop vnchost:3 (user1) -fp catalogue:/etc/X11/fontpath.d -pn -rfbauth /home/g1/user1/.vnc/passwd -rfbport 5903 -rfbwait 30000 -listen tcp
+	//
+	// user2   24980  0.0  0.1 229868 31644 ?        Sl   Jan16   0:29 /usr/bin/Xvnc :6 -auth /home/g2/user2/.Xauthority -desktop vnchost:6 (user2) -fp catalogue:/etc/X11/fontpath.d -geometry 1440x900 -pn -rfbauth /home/g2/user2/.vnc/passwd -rfbport 5906 -rfbwait 30000 -listen tcp -SecurityTypes VeNCrypt,X509Vnc -x509key /etc/tigervnc/certs/vnc_x509_ca.pem -x509cert /etc/tigervnc/certs/vnc_x509_crl.pem
+	s := bufio.NewScanner(strings.NewReader(out.GetResponseData()))
+	for s.Scan() {
+		ws := bufio.NewScanner(strings.NewReader(s.Text()))
+		ws.Split(bufio.ScanWords)
+		vnc := VNCServer{}
+		cnt := 0
+		for ws.Scan() {
+			cnt++
+			switch cnt {
+			case 1: // colume  1 - owner
+				vnc.Owner = s.Text()
+			case 12: // colume 12 - vnc display number
+				vnc.ID = fmt.Sprintf("%s%s", c.SrvHost, s.Text())
+				servers = append(servers, vnc)
+			default:
+				// do nothing here!!
+			}
+		}
+		if err := ws.Err(); err != nil {
+			log.Warnf("error parsing vnc owner and display: %+v", err)
+		}
+	}
+	if err := s.Err(); err != nil {
+		log.Warnf("error parsing vnc owner and display: %+v\n", err)
+	}
 
-	//return
+	return
 }
 
 // printRPCOutput prints output from a Unary gRPC call.
