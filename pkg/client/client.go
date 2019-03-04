@@ -270,9 +270,9 @@ func (c *TorqueHelperAccClient) GetVNCServers() (servers []VNCServer, err error)
 			cnt++
 			switch cnt {
 			case 1: // colume  1 - owner
-				vnc.Owner = s.Text()
+				vnc.Owner = ws.Text()
 			case 12: // colume 12 - vnc display number
-				vnc.ID = fmt.Sprintf("%s%s", c.SrvHost, s.Text())
+				vnc.ID = fmt.Sprintf("%s%s", c.SrvHost, ws.Text())
 				servers = append(servers, vnc)
 			default:
 				// do nothing here!!
