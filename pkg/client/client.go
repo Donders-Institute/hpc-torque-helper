@@ -248,9 +248,8 @@ func (c *TorqueHelperAccClient) GetVNCServers() (servers []VNCServer, err error)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
 
 	out, err := client.GetVNCServers(ctx, &empty.Empty{})
-
 	if err != nil {
-		return nil, printRPCOutput(out)
+		return
 	}
 
 	// The code below parses output to VNCServer object.  An example output is below:
