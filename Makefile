@@ -30,7 +30,7 @@ release:
 	VERSION=$(VERSION) rpmbuild --undefine=_disable_source_fetch -bb build/rpm/centos7.spec
 
 github_release:
-	scripts/gh-release.sh $(VERSION) false
+	@scripts/gh-release.sh $(VERSION) false
 
 clean:
 	@rm -rf $(GOPATH)/bin/cluster-*
