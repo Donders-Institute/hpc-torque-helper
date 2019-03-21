@@ -1,8 +1,10 @@
-PREFIX ?= "/opt/project"
-
 GOOS ?= "linux"
 
 SECRET ?= "my-secret"
+
+VERSION ?= "master"
+
+GOLDFLAGS = "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.secret=$(SECRET)"
 
 all: build
 
@@ -17,20 +19,18 @@ update_dep: $(GOPATH)/bin/dep
 	GOPATH=$(GOPATH) GOOS=$(GOOS) $(GOPATH)/bin/dep ensure --update
 
 build: build_dep
-	GOPATH=$(GOPATH) GOOS=$(GOOS) go install \
-	-ldflags "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.secret=$(SECRET)" \
-	github.com/Donders-Institute/hpc-torque-helper/...
+	GOPATH=$(GOPATH) GOOS=$(GOOS) go install $(GOLDFLAG) github.com/Donders-Institute/hpc-torque-helper/...
 
 doc:
 	@GOPATH=$(GOPATH) GOOS=$(GOOS) godoc -http=:6060
 
 test: build_dep
-	@GOPATH=$(GOPATH) GOOS=$(GOOS) GOCACHE=off go test \
-	-ldflags "-X github.com/Donders-Institute/hpc-torque-helper/internal/grpc.secret=$(SECRET)" \
-	-v github.com/Donders-Institute/hpc-torque-helper/...
+	@GOPATH=$(GOPATH) GOOS=$(GOOS) GOCACHE=off go test $(GOLDFLAG) -v github.com/Donders-Institute/hpc-torque-helper/...
+release:
+	VERSION=$(VERSION) rpmbuild --undefine=_disable_source_fetch -bb build/rpm/centos7.spec
 
-install: build
-	@install -D $(GOPATH)/bin/* $(PREFIX)/bin
+github_release:
+	scripts/gh-release.sh $(VERSION) false
 
 clean:
 	@rm -rf $(GOPATH)/bin/cluster-*
