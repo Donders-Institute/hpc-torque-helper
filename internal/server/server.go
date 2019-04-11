@@ -177,13 +177,13 @@ func validateJobID(id, torqueServer string) (jobFqid string, err error) {
 	// Trim the job suffix
 	sid := strings.Split(id, ".")[0]
 	jobFqid = id
-	// Check if the id is a digit number
+	// Check if the short job id contains only digits
 	if match, _ := regexp.MatchString("^([0-9]+)$", sid); !match {
 		err = errors.New("Invalid job id: " + id)
 		return
 	}
-	// Compose jobFqid if the provided id is not the FQID
-	if sid != id {
+	// Compose jobFqid if the provided id is a short job id
+	if id == sid {
 		jobFqid = sid + "." + torqueServer
 	}
 	return
