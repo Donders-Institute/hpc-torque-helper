@@ -1,0 +1,62 @@
+###############################################################################
+# This is an ansible playbook for deploying RPMs onto various servers on the
+# HPC cluster at DCCN.
+#
+# use command:
+#
+#     $ ansible-playbook ansible.yml -K
+#
+###############################################################################
+- hosts: pbs_server
+  become: yes
+  vars:
+    release: 1.2.0-1.el7.x86_64
+  tasks:
+    - name: check existence of the RPMs
+      register: ls
+      shell: ls -l
+      args:
+        chdir: /mnt/install/kickstart-7/miscpkgs/torque-helper/
+    #- debug: var=ls.stdout_lines
+    - name: install/update srv flavor daemon (trqhelpd_srv) of the hpc-torque-helper
+      register: yum
+      yum:
+        name: /mnt/install/kickstart-7/miscpkgs/torque-helper/hpc-torque-helper-server-srv-{{ release }}.rpm
+        state: present
+    #- debug: var=yum.results
+      
+- hosts: pbs_mom
+  become: yes
+  vars:
+    release: 1.2.0-1.el7.x86_64
+  tasks:
+    - name: check existence of the RPMs
+      register: ls
+      shell: ls -l
+      args:
+        chdir: /mnt/install/kickstart-7/miscpkgs/torque-helper/
+    #- debug: var=ls.stdout_lines
+    - name: install/update mom flavor daemon (trqhelpd_mom) of the hpc-torque-helper
+      register: yum
+      yum:
+        name: /mnt/install/kickstart-7/miscpkgs/torque-helper/hpc-torque-helper-server-mom-{{ release }}.rpm
+        state: present
+    #- debug: var=yum.results
+
+- hosts: mentat
+  become: yes
+  vars:
+    release: 1.2.0-1.el7.x86_64
+  tasks:
+    - name: check existence of the RPMs
+      register: ls
+      shell: ls -l
+      args:
+        chdir: /mnt/install/kickstart-7/miscpkgs/torque-helper/
+    #- debug: var=ls.stdout_lines
+    - name: install/update acc flavor daemon (trqhelpd_acc) of the hpc-torque-helper
+      register: yum
+      yum:
+        name: /mnt/install/kickstart-7/miscpkgs/torque-helper/hpc-torque-helper-server-acc-{{ release }}.rpm
+        state: present
+    #- debug: var=yum.results
