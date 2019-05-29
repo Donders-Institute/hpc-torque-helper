@@ -7,56 +7,53 @@
 #     $ ansible-playbook ansible.yml -K
 #
 ###############################################################################
-- hosts: pbs_server
-  become: yes
-  vars:
-    release: 1.2.0-1.el7.x86_64
+- name: set version number
+  gather_facts: false
+  hosts:
+    - pbs_server
+    - pbs_mom
+    - mentat
+  vars_prompt:
+    - name: rel_version
+      prompt: RPM version to deply
+      default: 1.2.1-1.el7.x86_64
+      private: no
   tasks:
-    - name: check existence of the RPMs
-      register: ls
-      shell: ls -l
-      args:
-        chdir: /mnt/install/kickstart-7/miscpkgs/torque-helper/
-    #- debug: var=ls.stdout_lines
-    - name: install/update srv flavor daemon (trqhelpd_srv) of the hpc-torque-helper
-      register: yum
-      yum:
-        name: /mnt/install/kickstart-7/miscpkgs/torque-helper/hpc-torque-helper-server-srv-{{ release }}.rpm
-        state: present
-    #- debug: var=yum.results
-      
-- hosts: pbs_mom
-  become: yes
-  vars:
-    release: 1.2.0-1.el7.x86_64
-  tasks:
-    - name: check existence of the RPMs
-      register: ls
-      shell: ls -l
-      args:
-        chdir: /mnt/install/kickstart-7/miscpkgs/torque-helper/
-    #- debug: var=ls.stdout_lines
-    - name: install/update mom flavor daemon (trqhelpd_mom) of the hpc-torque-helper
-      register: yum
-      yum:
-        name: /mnt/install/kickstart-7/miscpkgs/torque-helper/hpc-torque-helper-server-mom-{{ release }}.rpm
-        state: present
-    #- debug: var=yum.results
+    # global facts
+    - name: "rel_version: {{rel_version}}"
+      set_fact:
+        repodir: "/mnt/install/kickstart-7/miscpkgs/torque-helper"
+        release: "{{rel_version}}"
+    # group-specific facts
+    - name: "set pkg name for SRV component"
+      set_fact:
+        pkg_name: hpc-torque-helper-server-srv
+      when: "'pbs_server' in group_names"
+    - name: "set pkg name for MOM component"
+      set_fact:
+        pkg_name: hpc-torque-helper-server-mom
+      when: "'pbs_mom' in group_names"
+    - name: "set pkg name for ACC component"
+      set_fact:
+        pkg_name: hpc-torque-helper-server-acc
+      when: "'mentat' in group_names"
 
-- hosts: mentat
+- hosts: pbs_server:pbs_mom:mentat
+  gather_facts: false
   become: yes
   vars:
-    release: 1.2.0-1.el7.x86_64
+    rpmpath: "{{repodir}}/{{pkg_name}}-{{ release | mandatory }}.rpm"
   tasks:
-    - name: check existence of the RPMs
-      register: ls
-      shell: ls -l
-      args:
-        chdir: /mnt/install/kickstart-7/miscpkgs/torque-helper/
-    #- debug: var=ls.stdout_lines
-    - name: install/update acc flavor daemon (trqhelpd_acc) of the hpc-torque-helper
+    - name: check RPM file on nodes
+      stat:
+        path: "{{rpmpath}}"
+      register: rpmfile
+    - name: fail on RPM file not available
+      fail:
+        msg: "rpm not found: {{rpmpath}}"
+      when: rpmfile.stat.exists == False
+    - name: install/update hpc-torque-helper
       register: yum
       yum:
-        name: /mnt/install/kickstart-7/miscpkgs/torque-helper/hpc-torque-helper-server-acc-{{ release }}.rpm
+        name: "{{rpmpath}}"
         state: present
-    #- debug: var=yum.results
