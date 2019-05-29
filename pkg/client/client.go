@@ -185,7 +185,7 @@ func (c *TorqueHelperMomClient) PrintJobMemoryInfo(jobID string) error {
 
 	// check if job's Host attribute is available
 	if jobInfo.Host == "" {
-		return fmt.Errorf("job execution host unknown: %s", jobInfo.Host)
+		return fmt.Errorf("unknown job execution host (%s)", jobInfo.Host)
 	}
 
 	// force Mom service host to the one the job is running.
