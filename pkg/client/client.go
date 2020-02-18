@@ -260,12 +260,9 @@ func (c *TorqueHelperAccClient) GetVNCServers() (servers []VNCServer, err error)
 	}
 
 	// The code below parses output to VNCServer object.  An example output is below:
-	//
-	// user1    2056  0.0  0.3 256168 55692 pts/1    Sl   Jan10   1:40 /usr/bin/Xvnc :4 -geometry 1440x900 -listen tcp -auth /home/g1/user1/.Xauthority -desktop vnchost:4 (user1) -fp catalogue:/etc/X11/fontpath.d -pn -rfbauth /home/g1/user1/.vnc/passwd -rfbport 5904 -rfbwait 30000 -listen tcp -x509key /root/vnc/server.pem -x509cert /root/vnc/server.crt
-	//
-	// user1   13605  0.0  0.4 272396 67084 ?        Sl    2018   6:08 /usr/bin/Xvnc :3 -geometry 1440x900 -listen tcp -auth /home/g1/user1/.Xauthority -desktop vnchost:3 (user1) -fp catalogue:/etc/X11/fontpath.d -pn -rfbauth /home/g1/user1/.vnc/passwd -rfbport 5903 -rfbwait 30000 -listen tcp
-	//
-	// user2   24980  0.0  0.1 229868 31644 ?        Sl   Jan16   0:29 /usr/bin/Xvnc :6 -auth /home/g2/user2/.Xauthority -desktop vnchost:6 (user2) -fp catalogue:/etc/X11/fontpath.d -geometry 1440x900 -pn -rfbauth /home/g2/user2/.vnc/passwd -rfbport 5906 -rfbwait 30000 -listen tcp -SecurityTypes VeNCrypt,X509Vnc -x509key /etc/tigervnc/certs/vnc_x509_ca.pem -x509cert /etc/tigervnc/certs/vnc_x509_crl.pem
+	// user1                 1552 /usr/bin/Xvnc :51 -auth ...
+	// user2                 2050 /usr/bin/Xvnc :92 -auth ...
+	// user3                 2862 /usr/bin/Xvnc :11 -auth  ...
 	s := bufio.NewScanner(strings.NewReader(out.GetResponseData()))
 	for s.Scan() {
 		ws := bufio.NewScanner(strings.NewReader(s.Text()))
@@ -275,9 +272,9 @@ func (c *TorqueHelperAccClient) GetVNCServers() (servers []VNCServer, err error)
 		for ws.Scan() {
 			cnt++
 			switch cnt {
-			case 1: // colume  1 - owner
+			case 1: // colume 1 - owner
 				vnc.Owner = ws.Text()
-			case 12: // colume 12 - vnc display number
+			case 4: // colume 4 - vnc display number
 				vnc.ID = fmt.Sprintf("%s%s", c.SrvHost, ws.Text())
 				servers = append(servers, vnc)
 			default:

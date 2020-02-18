@@ -132,7 +132,7 @@ type TorqueHelperAcc struct {
 // GetVNCServers gets the VNC servers running on the server's local.
 func (s *TorqueHelperAcc) GetVNCServers(ctx context.Context, in *empty.Empty) (out *pb.GeneralResponse, err error) {
 
-	stdout, stderr, ec := sys.ExecCmd("ps", []string{"hu", "-C", "Xvnc"})
+	stdout, stderr, ec := sys.ExecCmd("ps", []string{"h", "-o", "user:20,pid,command", "-C", "Xvnc"})
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 
 	// out = &pb.ServerListResponse{ExitCode: ec, ErrorMessage: stderr.String()}
