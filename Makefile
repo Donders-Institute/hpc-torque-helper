@@ -15,13 +15,13 @@ endif
 all: build
 
 build:
-	GOOS=$(GOOS) go build $(GOLDFLAG) -o $(GOPATH)/bin/trqhelpd github.com/Donders-Institute/hpc-torque-helper/cmd/trqhelpd
+	GOOS=$(GOOS) go build --ldflags $(GOLDFLAGS) -o $(GOPATH)/bin/trqhelpd github.com/Donders-Institute/hpc-torque-helper/cmd/trqhelpd
 
 doc:
 	@GOOS=$(GOOS) godoc -http=:6060
 
 test: build
-	@GOOS=$(GOOS) go test $(GOLDFLAG) -v github.com/Donders-Institute/hpc-torque-helper/...
+	GOOS=$(GOOS) go test --ldflags $(GOLDFLAGS) -v github.com/Donders-Institute/hpc-torque-helper/...
 
 release:
 	VERSION=$(VERSION) rpmbuild --undefine=_disable_source_fetch -bb build/rpm/centos7.spec
