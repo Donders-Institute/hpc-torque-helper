@@ -138,7 +138,8 @@ if [ $1 -eq 0 ]; then
 fi
 
 %clean
-rm -rf %{gopath} 
+cd %{gopath}/src/github.com/Donders-Institute/%{name}; GOPATH=%{gopath} make clean
+rm -rf %{gopath}
 rm -f %{_topdir}/SOURCES/%{version}.tar.gz
 rm -rf $RPM_BUILD_ROOT
 

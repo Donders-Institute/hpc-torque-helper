@@ -31,4 +31,4 @@ github_release:
 
 clean:
 	@rm -rf $(GOPATH)/bin/trqhelpd
-	@rm -rf $(GOPATH)/pkg/*/Donders-Institute/hpc-torque-helper
+	go clean --modcache
