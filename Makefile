@@ -21,7 +21,7 @@ doc:
 	@GOOS=$(GOOS) godoc -http=:6060
 
 test: build
-	@GOOS=$(GOOS) GOCACHE=off go test $(GOLDFLAG) -v github.com/Donders-Institute/hpc-torque-helper/...
+	@GOOS=$(GOOS) go test $(GOLDFLAG) -v github.com/Donders-Institute/hpc-torque-helper/...
 
 release:
 	VERSION=$(VERSION) rpmbuild --undefine=_disable_source_fetch -bb build/rpm/centos7.spec
