@@ -2,8 +2,6 @@ package client
 
 import (
 	"io/ioutil"
-	"os"
-	"path"
 	"testing"
 )
 
@@ -11,7 +9,7 @@ var (
 	srvClient = TorqueHelperSrvClient{
 		SrvHost:     "localhost",
 		SrvPort:     60209,
-		SrvCertFile: path.Join(os.Getenv("GOPATH"), "src/github.com/Donders-Institute/hpc-torque-helper/test/cert/TestServer.crt"),
+		SrvCertFile: "testdata/cert/TestServer.crt",
 	}
 )
 
@@ -35,7 +33,7 @@ func TestSrvPrintClusterConfig(t *testing.T) {
 }
 
 func TestParseQstatXML(t *testing.T) {
-	xmldata, err := ioutil.ReadFile(path.Join(os.Getenv("GOPATH"), "src/github.com/Donders-Institute/hpc-torque-helper/test/data/qstat.xml"))
+	xmldata, err := ioutil.ReadFile("testdata/qstat.xml")
 	if err != nil {
 		t.Errorf("fail to read XML data from test file.\n")
 	}
