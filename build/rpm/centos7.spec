@@ -64,7 +64,7 @@ rm -rf %{gopath}
 mkdir -p %{gopath}/src/github.com/Donders-Institute
 # copy entire directory into gopath, this duplicate the source code
 cp -R %{_builddir}/%{name}-%{version} %{gopath}/src/github.com/Donders-Institute/%{name}
-cd %{gopath}/src/github.com/Donders-Institute/%{name}; GOPATH=%{gopath} make
+cd %{gopath}/src/github.com/Donders-Institute/%{name}; GOPATH=%{gopath} make; GOPATH=%{gopath} go clean --modcache
 
 %install
 mkdir -p %{buildroot}/%{_sbindir}
@@ -138,7 +138,6 @@ if [ $1 -eq 0 ]; then
 fi
 
 %clean
-cd %{gopath}/src/github.com/Donders-Institute/%{name}; GOPATH=%{gopath} make clean
 rm -rf %{gopath}
 rm -f %{_topdir}/SOURCES/%{version}.tar.gz
 rm -rf $RPM_BUILD_ROOT
