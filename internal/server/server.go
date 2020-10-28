@@ -106,9 +106,16 @@ func (s *TorqueHelperSrv) Qstatx(ctx context.Context, in *empty.Empty) (out *pb.
 // Checknode returns checknode output for a given node or ALL.
 func (s *TorqueHelperSrv) Checknode(ctx context.Context, in *pb.NodeInfoRequest) (out *pb.GeneralResponse, err error) {
 
-	nid, err := validateNodeID(in.Nid)
-	if err != nil {
-		return
+	var nid string
+	if strings.ToLower(in.Nid) == "all" {
+		// for all compute nodes
+		nid = "ALL"
+	} else {
+		// for a specific node
+		nid, err = validateNodeID(in.Nid)
+		if err != nil {
+			return
+		}
 	}
 
 	// construct checknode command-line arguments
