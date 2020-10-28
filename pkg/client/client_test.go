@@ -45,3 +45,20 @@ func TestParseQstatXML(t *testing.T) {
 		t.Errorf("unexpected data: %+v\n", jobinfo)
 	}
 }
+
+func TestParseChecknodeXML(t *testing.T) {
+	xmldata, err := ioutil.ReadFile("testdata/checknode.xml")
+	if err != nil {
+		t.Errorf("fail to read XML data from test file.\n")
+	}
+	nodes, err := parseChecknodeXML(xmldata)
+	if err != nil {
+		t.Errorf("fail parsing XML data: %+v\n", err)
+	}
+
+	for _, n := range nodes {
+		if n.ID != "GLOBAL" {
+			t.Logf("node: %+v\n", n)
+		}
+	}
+}

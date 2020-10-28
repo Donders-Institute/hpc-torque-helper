@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/Donders-Institute/hpc-torque-helper/internal/sys"
@@ -144,6 +145,29 @@ func (c *TorqueHelperSrvClient) PrintClusterTracejob(jobID string) error {
 		return err
 	}
 	return printRPCOutput(out)
+}
+
+// GetNodeResourceStatus returns node resource status extracted from the
+// output of the `checknode`.
+func (c *TorqueHelperSrvClient) GetNodeResourceStatus(nodeID string) ([]NodeResourceStatus, error) {
+	conn, err := c.grpcConnect()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	client := pb.NewTorqueHelperSrvServiceClient(conn)
+
+	md := metadata.Pairs("token", pb.GetSecret())
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	out, err := client.Checknode(ctx, &pb.NodeInfoRequest{Nid: nodeID, Xml: false})
+	if err != nil {
+		return nil, err
+	}
+
+	// parsing the out to return node resource
+	return parseChecknodeXML([]byte(out.ResponseData))
 }
 
 // TorqueHelperMomClient implements client APIs for the TorqueHelperMom service.
@@ -338,4 +362,170 @@ func parseQstatXML(xmlData []byte) (*Job, error) {
 	log.Debugf("job data parsed from XML: %+v", d.Job)
 
 	return &d.Job, nil
+}
+
+// Resources consists of a slice of `NodeResourceStatus`.
+type Resources struct {
+	Nodes []NodeResourceStatus
+}
+
+// UnmarshalXML implemented `xml.Unmarshaler` for node resource data.
+func (c *Resources) UnmarshalXML(d *xml.Decoder, elem xml.StartElement) error {
+
+	if elem.Name.Local == "node" {
+
+		var n NodeResourceStatus
+
+		for _, attr := range elem.Attr {
+
+			fmt.Println(attr.Name.Local)
+
+			switch attr.Name.Local {
+			case "NODEID":
+				if attr.Value == "GLOBAL" {
+					return d.Skip()
+				}
+				n.ID = attr.Value
+			case "FEATURES":
+				n.Features = strings.Split(attr.Value, ",")
+			case "GRES":
+				for _, r := range strings.Split(attr.Value, ";") {
+					if strings.HasPrefix(r, "gpus=") {
+						n.TotalGPUS, _ = strconv.Atoi(strings.TrimPrefix(r, "gpus="))
+						break
+					}
+				}
+			case "AGRES":
+				for _, r := range strings.Split(attr.Value, ";") {
+					if strings.HasPrefix(r, "gpus=") {
+						n.AvailGPUS, _ = strconv.Atoi(strings.TrimPrefix(r, "gpus="))
+						break
+					}
+				}
+			case "RCPROC":
+				nprocs, err := strconv.Atoi(attr.Value)
+				if err != nil {
+					return err
+				}
+				n.TotalProcs = nprocs
+			case "RAPROC":
+				nprocs, err := strconv.Atoi(attr.Value)
+				if err != nil {
+					return err
+				}
+				n.AvailProcs = nprocs
+			default:
+
+			}
+		}
+
+		fmt.Println(n)
+
+		c.Nodes = append(c.Nodes, n)
+
+		return d.Skip()
+
+	}
+
+	var s string
+	d.DecodeElement(s, &elem)
+	return nil
+}
+
+// NodeResourceStatus defines the data structure of the node resource status extracted from
+// the XML output of `checknode --xml`.
+type NodeResourceStatus struct {
+	ID          string
+	State       string
+	Features    []string
+	TotalProcs  int
+	AvailProcs  int
+	TotalMemGB  int
+	AvailMemGB  int
+	TotalDiskGB int
+	AvailDiskGB int
+	TotalGPUS   int
+	AvailGPUS   int
+}
+
+// UnmarshalXML implemented `xml.Unmarshaler` for node resource data.
+func (c *NodeResourceStatus) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+
+	for _, attr := range start.Attr {
+		switch attr.Name.Local {
+		case "NODEID":
+			c.ID = attr.Value
+		case "NODESTATE":
+			c.State = attr.Value
+		case "FEATURES":
+			c.Features = strings.Split(attr.Value, ",")
+		case "RCPROC":
+			nproc, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return err
+			}
+			c.TotalProcs = nproc
+		case "RAPROC":
+			nproc, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return err
+			}
+			c.AvailProcs = nproc
+		case "RCDISK":
+			sizeMB, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return err
+			}
+			c.TotalDiskGB = sizeMB / 1024
+		case "RADISK":
+			sizeMB, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return err
+			}
+			c.AvailDiskGB = sizeMB / 1024
+		case "RCMEM":
+			sizeMB, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return err
+			}
+			c.TotalMemGB = sizeMB / 1024
+		case "RAMEM":
+			sizeMB, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return err
+			}
+			c.AvailMemGB = sizeMB / 1024
+		case "GRES":
+			for _, r := range strings.Split(attr.Value, ";") {
+				if strings.HasPrefix(r, "gpus=") {
+					c.TotalGPUS, _ = strconv.Atoi(strings.TrimPrefix(r, "gpus="))
+				}
+			}
+		case "AGRES":
+			for _, r := range strings.Split(attr.Value, ";") {
+				if strings.HasPrefix(r, "gpus=") {
+					c.AvailGPUS, _ = strconv.Atoi(strings.TrimPrefix(r, "gpus="))
+				}
+			}
+		default:
+		}
+	}
+
+	return d.Skip()
+}
+
+// parseChecknodeXML parses the output of `checknode --xml` and returns the Node data structure.
+func parseChecknodeXML(xmlData []byte) ([]NodeResourceStatus, error) {
+
+	type data struct {
+		XMLName xml.Name             `xml:"Data"`
+		Nodes   []NodeResourceStatus `xml:"node"`
+	}
+
+	r := data{}
+	if err := xml.Unmarshal(xmlData, &r); err != nil {
+		return nil, fmt.Errorf("cannot get node resource status: %v", err)
+	}
+
+	return r.Nodes, nil
 }
