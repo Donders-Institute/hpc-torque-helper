@@ -15,6 +15,12 @@ message UserInfoRequest {
     bool xml = 2;
 }
 
+// UserInfoRequest defines required input for retrieving node-related information.
+message NodeInfoRequest {
+    string nid = 1;
+    bool xml = 2;
+}
+
 // GeneralResponse is a very simple and naive output message.
 message GeneralResponse {
     string responseData = 1;
@@ -32,6 +38,7 @@ service TorqueHelperSrvService {
     rpc GetBlockedJobsOfUser(UserInfoRequest) returns (GeneralResponse);
     rpc Qstat(google.protobuf.Empty) returns (GeneralResponse);
     rpc Qstatx(google.protobuf.Empty) returns (GeneralResponse);
+    rpc Checknode(NodeInfoRequest) returns (GeneralResponse);
 }
 
 // TorqueHelperSrvService defines interfaces exported on the trqhelpd running on the PBS mom server.

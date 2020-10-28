@@ -103,6 +103,27 @@ func (s *TorqueHelperSrv) Qstatx(ctx context.Context, in *empty.Empty) (out *pb.
 	return
 }
 
+// Checknode returns checknode output for a given node or ALL.
+func (s *TorqueHelperSrv) Checknode(ctx context.Context, in *pb.NodeInfoRequest) (out *pb.GeneralResponse, err error) {
+
+	nid, err := validateNodeID(in.Nid)
+	if err != nil {
+		return
+	}
+
+	// construct checknode command-line arguments
+	args := []string{}
+	if in.Xml {
+		args = append(args, "--xml")
+	}
+	args = append(args, nid)
+
+	// run checknode to get node information
+	stdout, stderr, ec := sys.ExecCmd("checknode", args)
+	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
+	return
+}
+
 // TorqueHelperMom implements the gRPC interfaces exported by the TorqueHelper service running on the Mom server.
 type TorqueHelperMom struct {
 	// TorqueServer is the hostname of the Torque/Moab server.
@@ -186,5 +207,23 @@ func validateJobID(id, torqueServer string) (jobFqid string, err error) {
 	if id == sid {
 		jobFqid = sid + "." + torqueServer
 	}
+	return
+}
+
+// validateNodeID checks if the given node id `id` is a valid Torque node id.
+// If the given id is a valid short hostname, the fully qualified hostname is constructed
+// by appending `dccn.nl` to the short name.
+func validateNodeID(id string) (nodeFqid string, err error) {
+
+	// assuming compute node has hostname with prefix "dccn-c" followed by digits
+	matched, _ := regexp.MatchString(`dccn-c[0-9]+`, nodeFqid)
+	if !matched {
+		err = fmt.Errorf("invalid compute node: %s", nodeFqid)
+		return
+	}
+
+	// construct the fully qualified node name.
+	nodeFqid = strings.Join([]string{strings.TrimSuffix(id, ".dccn.nl"), "dccn.nl"}, ".")
+
 	return
 }

@@ -3,14 +3,15 @@
 
 package grpc
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import empty "github.com/golang/protobuf/ptypes/empty"
-
 import (
-	context "golang.org/x/net/context"
+	context "context"
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,7 +23,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // JobInfoRequest defines required input for retrieving job-related information.
 type JobInfoRequest struct {
@@ -37,16 +38,17 @@ func (m *JobInfoRequest) Reset()         { *m = JobInfoRequest{} }
 func (m *JobInfoRequest) String() string { return proto.CompactTextString(m) }
 func (*JobInfoRequest) ProtoMessage()    {}
 func (*JobInfoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_grpc_f7340b1dbab771a6, []int{0}
+	return fileDescriptor_bedfbfc9b54e5600, []int{0}
 }
+
 func (m *JobInfoRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JobInfoRequest.Unmarshal(m, b)
 }
 func (m *JobInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_JobInfoRequest.Marshal(b, m, deterministic)
 }
-func (dst *JobInfoRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JobInfoRequest.Merge(dst, src)
+func (m *JobInfoRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JobInfoRequest.Merge(m, src)
 }
 func (m *JobInfoRequest) XXX_Size() int {
 	return xxx_messageInfo_JobInfoRequest.Size(m)
@@ -84,16 +86,17 @@ func (m *UserInfoRequest) Reset()         { *m = UserInfoRequest{} }
 func (m *UserInfoRequest) String() string { return proto.CompactTextString(m) }
 func (*UserInfoRequest) ProtoMessage()    {}
 func (*UserInfoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_grpc_f7340b1dbab771a6, []int{1}
+	return fileDescriptor_bedfbfc9b54e5600, []int{1}
 }
+
 func (m *UserInfoRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UserInfoRequest.Unmarshal(m, b)
 }
 func (m *UserInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UserInfoRequest.Marshal(b, m, deterministic)
 }
-func (dst *UserInfoRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UserInfoRequest.Merge(dst, src)
+func (m *UserInfoRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UserInfoRequest.Merge(m, src)
 }
 func (m *UserInfoRequest) XXX_Size() int {
 	return xxx_messageInfo_UserInfoRequest.Size(m)
@@ -118,6 +121,54 @@ func (m *UserInfoRequest) GetXml() bool {
 	return false
 }
 
+// UserInfoRequest defines required input for retrieving node-related information.
+type NodeInfoRequest struct {
+	Nid                  string   `protobuf:"bytes,1,opt,name=nid,proto3" json:"nid,omitempty"`
+	Xml                  bool     `protobuf:"varint,2,opt,name=xml,proto3" json:"xml,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *NodeInfoRequest) Reset()         { *m = NodeInfoRequest{} }
+func (m *NodeInfoRequest) String() string { return proto.CompactTextString(m) }
+func (*NodeInfoRequest) ProtoMessage()    {}
+func (*NodeInfoRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bedfbfc9b54e5600, []int{2}
+}
+
+func (m *NodeInfoRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NodeInfoRequest.Unmarshal(m, b)
+}
+func (m *NodeInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NodeInfoRequest.Marshal(b, m, deterministic)
+}
+func (m *NodeInfoRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NodeInfoRequest.Merge(m, src)
+}
+func (m *NodeInfoRequest) XXX_Size() int {
+	return xxx_messageInfo_NodeInfoRequest.Size(m)
+}
+func (m *NodeInfoRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_NodeInfoRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_NodeInfoRequest proto.InternalMessageInfo
+
+func (m *NodeInfoRequest) GetNid() string {
+	if m != nil {
+		return m.Nid
+	}
+	return ""
+}
+
+func (m *NodeInfoRequest) GetXml() bool {
+	if m != nil {
+		return m.Xml
+	}
+	return false
+}
+
 // GeneralResponse is a very simple and naive output message.
 type GeneralResponse struct {
 	ResponseData         string   `protobuf:"bytes,1,opt,name=responseData,proto3" json:"responseData,omitempty"`
@@ -132,16 +183,17 @@ func (m *GeneralResponse) Reset()         { *m = GeneralResponse{} }
 func (m *GeneralResponse) String() string { return proto.CompactTextString(m) }
 func (*GeneralResponse) ProtoMessage()    {}
 func (*GeneralResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_grpc_f7340b1dbab771a6, []int{2}
+	return fileDescriptor_bedfbfc9b54e5600, []int{3}
 }
+
 func (m *GeneralResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GeneralResponse.Unmarshal(m, b)
 }
 func (m *GeneralResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GeneralResponse.Marshal(b, m, deterministic)
 }
-func (dst *GeneralResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GeneralResponse.Merge(dst, src)
+func (m *GeneralResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GeneralResponse.Merge(m, src)
 }
 func (m *GeneralResponse) XXX_Size() int {
 	return xxx_messageInfo_GeneralResponse.Size(m)
@@ -187,16 +239,17 @@ func (m *ServerListResponse) Reset()         { *m = ServerListResponse{} }
 func (m *ServerListResponse) String() string { return proto.CompactTextString(m) }
 func (*ServerListResponse) ProtoMessage()    {}
 func (*ServerListResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_grpc_f7340b1dbab771a6, []int{3}
+	return fileDescriptor_bedfbfc9b54e5600, []int{4}
 }
+
 func (m *ServerListResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ServerListResponse.Unmarshal(m, b)
 }
 func (m *ServerListResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ServerListResponse.Marshal(b, m, deterministic)
 }
-func (dst *ServerListResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ServerListResponse.Merge(dst, src)
+func (m *ServerListResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ServerListResponse.Merge(m, src)
 }
 func (m *ServerListResponse) XXX_Size() int {
 	return xxx_messageInfo_ServerListResponse.Size(m)
@@ -240,16 +293,17 @@ func (m *ServerListResponse_Server) Reset()         { *m = ServerListResponse_Se
 func (m *ServerListResponse_Server) String() string { return proto.CompactTextString(m) }
 func (*ServerListResponse_Server) ProtoMessage()    {}
 func (*ServerListResponse_Server) Descriptor() ([]byte, []int) {
-	return fileDescriptor_grpc_f7340b1dbab771a6, []int{3, 0}
+	return fileDescriptor_bedfbfc9b54e5600, []int{4, 0}
 }
+
 func (m *ServerListResponse_Server) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ServerListResponse_Server.Unmarshal(m, b)
 }
 func (m *ServerListResponse_Server) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ServerListResponse_Server.Marshal(b, m, deterministic)
 }
-func (dst *ServerListResponse_Server) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ServerListResponse_Server.Merge(dst, src)
+func (m *ServerListResponse_Server) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ServerListResponse_Server.Merge(m, src)
 }
 func (m *ServerListResponse_Server) XXX_Size() int {
 	return xxx_messageInfo_ServerListResponse_Server.Size(m)
@@ -277,18 +331,56 @@ func (m *ServerListResponse_Server) GetOwner() string {
 func init() {
 	proto.RegisterType((*JobInfoRequest)(nil), "grpc.JobInfoRequest")
 	proto.RegisterType((*UserInfoRequest)(nil), "grpc.UserInfoRequest")
+	proto.RegisterType((*NodeInfoRequest)(nil), "grpc.NodeInfoRequest")
 	proto.RegisterType((*GeneralResponse)(nil), "grpc.GeneralResponse")
 	proto.RegisterType((*ServerListResponse)(nil), "grpc.ServerListResponse")
 	proto.RegisterType((*ServerListResponse_Server)(nil), "grpc.ServerListResponse.Server")
 }
 
+func init() { proto.RegisterFile("grpc.proto", fileDescriptor_bedfbfc9b54e5600) }
+
+var fileDescriptor_bedfbfc9b54e5600 = []byte{
+	// 483 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0x4f, 0x6f, 0xd3, 0x40,
+	0x10, 0xc5, 0xe5, 0xa4, 0x09, 0xe9, 0x50, 0x5a, 0x58, 0x85, 0x2a, 0x0a, 0x07, 0xa2, 0x9c, 0x72,
+	0x72, 0xa5, 0x40, 0x41, 0x11, 0x02, 0x01, 0x29, 0x0a, 0x58, 0xa4, 0x80, 0x53, 0x10, 0x57, 0xff,
+	0x99, 0x18, 0x53, 0x67, 0xc7, 0xdd, 0x5d, 0x97, 0xf0, 0xcd, 0xb8, 0xf1, 0xd5, 0xd0, 0x7a, 0x9d,
+	0xb4, 0x71, 0x89, 0x90, 0xb9, 0xcd, 0x8e, 0xde, 0xef, 0xcd, 0x7a, 0xfc, 0x16, 0x20, 0x12, 0x69,
+	0x60, 0xa7, 0x82, 0x14, 0xb1, 0x1d, 0x5d, 0x77, 0x1f, 0x44, 0x44, 0x51, 0x82, 0x47, 0x79, 0xcf,
+	0xcf, 0xe6, 0x47, 0xb8, 0x48, 0xd5, 0x4f, 0x23, 0xe9, 0x3f, 0x86, 0x7d, 0x87, 0xfc, 0x77, 0x7c,
+	0x4e, 0x2e, 0x5e, 0x64, 0x28, 0x15, 0xbb, 0x0b, 0xf5, 0xef, 0x71, 0xd8, 0xb1, 0x7a, 0xd6, 0x60,
+	0xd7, 0xd5, 0xa5, 0xee, 0x2c, 0x17, 0x49, 0xa7, 0xd6, 0xb3, 0x06, 0x2d, 0x57, 0x97, 0xfd, 0x63,
+	0x38, 0xf8, 0x2c, 0x51, 0x94, 0xb0, 0xec, 0x0a, 0xcb, 0xb6, 0x61, 0xa7, 0x14, 0x62, 0x09, 0xe3,
+	0x57, 0x18, 0xff, 0x2b, 0x96, 0xc1, 0xc1, 0x04, 0x39, 0x0a, 0x2f, 0x71, 0x51, 0xa6, 0xc4, 0x25,
+	0xb2, 0x3e, 0xec, 0x89, 0xa2, 0x3e, 0xf1, 0x94, 0x57, 0xf0, 0x1b, 0x3d, 0xd6, 0x85, 0x16, 0x2e,
+	0x63, 0x35, 0xa6, 0x10, 0x73, 0xb7, 0x86, 0xbb, 0x3e, 0x6b, 0x1e, 0x85, 0x20, 0x31, 0x45, 0x29,
+	0xbd, 0x08, 0x3b, 0x75, 0xc3, 0x5f, 0xef, 0xf5, 0x7f, 0x5b, 0xc0, 0x66, 0x28, 0x2e, 0x51, 0xbc,
+	0x8f, 0xa5, 0x5a, 0x8f, 0xbe, 0x6e, 0x6b, 0xfd, 0xc3, 0xb6, 0x76, 0xd3, 0x96, 0x8d, 0xe0, 0x96,
+	0xcc, 0x5d, 0x65, 0xa7, 0xde, 0xab, 0x0f, 0x6e, 0x0f, 0x1f, 0xda, 0xf9, 0x2f, 0xbb, 0x39, 0xaa,
+	0x68, 0xb9, 0x2b, 0x7d, 0xd7, 0x86, 0xa6, 0x69, 0xb1, 0x7d, 0xa8, 0xad, 0xb7, 0x56, 0x8b, 0x43,
+	0xd6, 0x86, 0x06, 0xfd, 0xe0, 0x28, 0x8a, 0x89, 0xe6, 0x30, 0xfc, 0xb5, 0x03, 0x87, 0x67, 0x24,
+	0x2e, 0x32, 0x7c, 0x8b, 0x49, 0x8a, 0x62, 0x26, 0x2e, 0x35, 0x1f, 0x07, 0xc8, 0x8e, 0x61, 0xe7,
+	0x63, 0xcc, 0x23, 0x76, 0x68, 0x9b, 0x74, 0xd8, 0xab, 0x74, 0xd8, 0x6f, 0x74, 0x3a, 0xba, 0xf7,
+	0xcd, 0xa5, 0xca, 0x7b, 0x7f, 0x0a, 0xad, 0x33, 0xe1, 0x05, 0xe8, 0x90, 0xcf, 0xda, 0x46, 0xb2,
+	0x19, 0x9f, 0x6d, 0xe0, 0x73, 0xd8, 0x33, 0x37, 0x19, 0x13, 0x9f, 0xc7, 0x95, 0xe7, 0x3e, 0x03,
+	0x98, 0x92, 0xe7, 0xff, 0x1f, 0xfc, 0x12, 0xee, 0x4d, 0x50, 0x39, 0xe4, 0xbf, 0x4e, 0x28, 0x38,
+	0x77, 0xd1, 0x93, 0xc4, 0xab, 0xdd, 0xfe, 0x04, 0xda, 0x13, 0x54, 0x39, 0x8e, 0xa1, 0x43, 0xbe,
+	0xfc, 0x30, 0xd7, 0xf9, 0x67, 0x85, 0xbc, 0xf4, 0x16, 0xb6, 0xb9, 0x3c, 0x81, 0xc6, 0x27, 0xa9,
+	0x3c, 0x55, 0x7d, 0xe9, 0xcd, 0x9c, 0x5b, 0x56, 0x05, 0x47, 0xb0, 0x3b, 0xfe, 0x86, 0xc1, 0x39,
+	0xd7, 0xd9, 0x2c, 0x34, 0xa5, 0x07, 0xb8, 0x05, 0x1d, 0xce, 0x36, 0x93, 0x33, 0xa5, 0xc5, 0x2a,
+	0x39, 0x23, 0x00, 0x87, 0xfc, 0x29, 0x2e, 0xb4, 0x4b, 0xa5, 0x35, 0x0e, 0xbf, 0x6e, 0x9a, 0xbe,
+	0x0a, 0x82, 0x95, 0xe9, 0x0b, 0xb8, 0x33, 0x41, 0xf5, 0xe5, 0x74, 0x6c, 0xf2, 0x2d, 0x2b, 0x7e,
+	0xa9, 0xdf, 0xcc, 0x65, 0x8f, 0xfe, 0x04, 0x00, 0x00, 0xff, 0xff, 0xd8, 0x3d, 0xfd, 0xd2, 0xfe,
+	0x04, 0x00, 0x00,
+}
+
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // TorqueHelperSrvServiceClient is the client API for TorqueHelperSrvService service.
 //
@@ -302,13 +394,14 @@ type TorqueHelperSrvServiceClient interface {
 	GetBlockedJobsOfUser(ctx context.Context, in *UserInfoRequest, opts ...grpc.CallOption) (*GeneralResponse, error)
 	Qstat(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GeneralResponse, error)
 	Qstatx(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GeneralResponse, error)
+	Checknode(ctx context.Context, in *NodeInfoRequest, opts ...grpc.CallOption) (*GeneralResponse, error)
 }
 
 type torqueHelperSrvServiceClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewTorqueHelperSrvServiceClient(cc *grpc.ClientConn) TorqueHelperSrvServiceClient {
+func NewTorqueHelperSrvServiceClient(cc grpc.ClientConnInterface) TorqueHelperSrvServiceClient {
 	return &torqueHelperSrvServiceClient{cc}
 }
 
@@ -384,6 +477,15 @@ func (c *torqueHelperSrvServiceClient) Qstatx(ctx context.Context, in *empty.Emp
 	return out, nil
 }
 
+func (c *torqueHelperSrvServiceClient) Checknode(ctx context.Context, in *NodeInfoRequest, opts ...grpc.CallOption) (*GeneralResponse, error) {
+	out := new(GeneralResponse)
+	err := c.cc.Invoke(ctx, "/grpc.TorqueHelperSrvService/Checknode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TorqueHelperSrvServiceServer is the server API for TorqueHelperSrvService service.
 type TorqueHelperSrvServiceServer interface {
 	Ping(context.Context, *empty.Empty) (*GeneralResponse, error)
@@ -394,6 +496,39 @@ type TorqueHelperSrvServiceServer interface {
 	GetBlockedJobsOfUser(context.Context, *UserInfoRequest) (*GeneralResponse, error)
 	Qstat(context.Context, *empty.Empty) (*GeneralResponse, error)
 	Qstatx(context.Context, *empty.Empty) (*GeneralResponse, error)
+	Checknode(context.Context, *NodeInfoRequest) (*GeneralResponse, error)
+}
+
+// UnimplementedTorqueHelperSrvServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedTorqueHelperSrvServiceServer struct {
+}
+
+func (*UnimplementedTorqueHelperSrvServiceServer) Ping(ctx context.Context, req *empty.Empty) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (*UnimplementedTorqueHelperSrvServiceServer) TraceJob(ctx context.Context, req *JobInfoRequest) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TraceJob not implemented")
+}
+func (*UnimplementedTorqueHelperSrvServiceServer) TorqueConfig(ctx context.Context, req *empty.Empty) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TorqueConfig not implemented")
+}
+func (*UnimplementedTorqueHelperSrvServiceServer) MoabConfig(ctx context.Context, req *empty.Empty) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MoabConfig not implemented")
+}
+func (*UnimplementedTorqueHelperSrvServiceServer) GetJobBlockReason(ctx context.Context, req *JobInfoRequest) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetJobBlockReason not implemented")
+}
+func (*UnimplementedTorqueHelperSrvServiceServer) GetBlockedJobsOfUser(ctx context.Context, req *UserInfoRequest) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockedJobsOfUser not implemented")
+}
+func (*UnimplementedTorqueHelperSrvServiceServer) Qstat(ctx context.Context, req *empty.Empty) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Qstat not implemented")
+}
+func (*UnimplementedTorqueHelperSrvServiceServer) Qstatx(ctx context.Context, req *empty.Empty) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Qstatx not implemented")
+}
+func (*UnimplementedTorqueHelperSrvServiceServer) Checknode(ctx context.Context, req *NodeInfoRequest) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Checknode not implemented")
 }
 
 func RegisterTorqueHelperSrvServiceServer(s *grpc.Server, srv TorqueHelperSrvServiceServer) {
@@ -544,6 +679,24 @@ func _TorqueHelperSrvService_Qstatx_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TorqueHelperSrvService_Checknode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NodeInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TorqueHelperSrvServiceServer).Checknode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.TorqueHelperSrvService/Checknode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TorqueHelperSrvServiceServer).Checknode(ctx, req.(*NodeInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _TorqueHelperSrvService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "grpc.TorqueHelperSrvService",
 	HandlerType: (*TorqueHelperSrvServiceServer)(nil),
@@ -580,6 +733,10 @@ var _TorqueHelperSrvService_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Qstatx",
 			Handler:    _TorqueHelperSrvService_Qstatx_Handler,
 		},
+		{
+			MethodName: "Checknode",
+			Handler:    _TorqueHelperSrvService_Checknode_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "grpc.proto",
@@ -593,10 +750,10 @@ type TorqueHelperMomServiceClient interface {
 }
 
 type torqueHelperMomServiceClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewTorqueHelperMomServiceClient(cc *grpc.ClientConn) TorqueHelperMomServiceClient {
+func NewTorqueHelperMomServiceClient(cc grpc.ClientConnInterface) TorqueHelperMomServiceClient {
 	return &torqueHelperMomServiceClient{cc}
 }
 
@@ -612,6 +769,14 @@ func (c *torqueHelperMomServiceClient) JobMemInfo(ctx context.Context, in *JobIn
 // TorqueHelperMomServiceServer is the server API for TorqueHelperMomService service.
 type TorqueHelperMomServiceServer interface {
 	JobMemInfo(context.Context, *JobInfoRequest) (*GeneralResponse, error)
+}
+
+// UnimplementedTorqueHelperMomServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedTorqueHelperMomServiceServer struct {
+}
+
+func (*UnimplementedTorqueHelperMomServiceServer) JobMemInfo(ctx context.Context, req *JobInfoRequest) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method JobMemInfo not implemented")
 }
 
 func RegisterTorqueHelperMomServiceServer(s *grpc.Server, srv TorqueHelperMomServiceServer) {
@@ -657,10 +822,10 @@ type TorqueHelperAccServiceClient interface {
 }
 
 type torqueHelperAccServiceClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewTorqueHelperAccServiceClient(cc *grpc.ClientConn) TorqueHelperAccServiceClient {
+func NewTorqueHelperAccServiceClient(cc grpc.ClientConnInterface) TorqueHelperAccServiceClient {
 	return &torqueHelperAccServiceClient{cc}
 }
 
@@ -676,6 +841,14 @@ func (c *torqueHelperAccServiceClient) GetVNCServers(ctx context.Context, in *em
 // TorqueHelperAccServiceServer is the server API for TorqueHelperAccService service.
 type TorqueHelperAccServiceServer interface {
 	GetVNCServers(context.Context, *empty.Empty) (*GeneralResponse, error)
+}
+
+// UnimplementedTorqueHelperAccServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedTorqueHelperAccServiceServer struct {
+}
+
+func (*UnimplementedTorqueHelperAccServiceServer) GetVNCServers(ctx context.Context, req *empty.Empty) (*GeneralResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVNCServers not implemented")
 }
 
 func RegisterTorqueHelperAccServiceServer(s *grpc.Server, srv TorqueHelperAccServiceServer) {
@@ -711,39 +884,4 @@ var _TorqueHelperAccService_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "grpc.proto",
-}
-
-func init() { proto.RegisterFile("grpc.proto", fileDescriptor_grpc_f7340b1dbab771a6) }
-
-var fileDescriptor_grpc_f7340b1dbab771a6 = []byte{
-	// 457 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x92, 0xdf, 0x6f, 0xd3, 0x40,
-	0x0c, 0xc7, 0x95, 0x66, 0x2d, 0xc5, 0x8c, 0x0d, 0x4e, 0x65, 0xaa, 0xca, 0x03, 0x55, 0x9f, 0xfa,
-	0x94, 0x49, 0x85, 0x81, 0x26, 0x04, 0x02, 0x3a, 0x54, 0x88, 0x28, 0x3f, 0xd2, 0x81, 0x78, 0xbd,
-	0x4b, 0xdd, 0x28, 0x90, 0xc6, 0xd9, 0xdd, 0x65, 0x94, 0xbf, 0x8e, 0xbf, 0x0c, 0x09, 0x5d, 0x2e,
-	0x2d, 0x4b, 0xc7, 0x84, 0xb2, 0x37, 0xfb, 0x2b, 0x7f, 0xbe, 0xb6, 0x6c, 0x03, 0x44, 0x32, 0x0b,
-	0xbd, 0x4c, 0x92, 0x26, 0xb6, 0x63, 0xe2, 0xde, 0xfd, 0x88, 0x28, 0x4a, 0xf0, 0xb0, 0xd0, 0x44,
-	0xbe, 0x38, 0xc4, 0x65, 0xa6, 0x7f, 0xda, 0x92, 0xc1, 0x23, 0xd8, 0xf3, 0x49, 0xbc, 0x4d, 0x17,
-	0x14, 0xe0, 0x59, 0x8e, 0x4a, 0xb3, 0x3b, 0xe0, 0x7e, 0x8b, 0xe7, 0x5d, 0xa7, 0xef, 0x0c, 0x6f,
-	0x06, 0x26, 0x34, 0xca, 0x6a, 0x99, 0x74, 0x1b, 0x7d, 0x67, 0xd8, 0x0e, 0x4c, 0x38, 0x38, 0x82,
-	0xfd, 0xcf, 0x0a, 0xe5, 0x16, 0x96, 0xff, 0xc5, 0xf2, 0x7f, 0x62, 0x39, 0xec, 0x4f, 0x30, 0x45,
-	0xc9, 0x93, 0x00, 0x55, 0x46, 0xa9, 0x42, 0x36, 0x80, 0x5d, 0x59, 0xc6, 0x27, 0x5c, 0xf3, 0x92,
-	0xaf, 0x68, 0xac, 0x07, 0x6d, 0x5c, 0xc5, 0x7a, 0x4c, 0x73, 0x2c, 0xdc, 0x9a, 0xc1, 0x26, 0x37,
-	0x3c, 0x4a, 0x49, 0x72, 0x8a, 0x4a, 0xf1, 0x08, 0xbb, 0xae, 0xe5, 0x2f, 0x6a, 0x83, 0x5f, 0x0e,
-	0xb0, 0x19, 0xca, 0x73, 0x94, 0xef, 0x62, 0xa5, 0x37, 0xad, 0x2f, 0xda, 0x3a, 0xff, 0xb1, 0x6d,
-	0x5c, 0xb6, 0x65, 0xc7, 0x70, 0x43, 0x15, 0xae, 0xaa, 0xeb, 0xf6, 0xdd, 0xe1, 0xad, 0xd1, 0x03,
-	0xaf, 0xd8, 0xfd, 0xe5, 0x56, 0xa5, 0x14, 0xac, 0xeb, 0x7b, 0x1e, 0xb4, 0xac, 0xc4, 0xf6, 0xa0,
-	0xb1, 0xd9, 0x5a, 0x23, 0x9e, 0xb3, 0x0e, 0x34, 0xe9, 0x47, 0x8a, 0xb2, 0xec, 0x68, 0x93, 0xd1,
-	0x6f, 0x17, 0x0e, 0x4e, 0x49, 0x9e, 0xe5, 0xf8, 0x06, 0x93, 0x0c, 0xe5, 0x4c, 0x9e, 0x1b, 0x3e,
-	0x0e, 0x91, 0x1d, 0xc1, 0xce, 0xc7, 0x38, 0x8d, 0xd8, 0x81, 0x67, 0xcf, 0xec, 0xad, 0xcf, 0xec,
-	0xbd, 0x36, 0x67, 0xee, 0xdd, 0xb3, 0x43, 0x6d, 0xef, 0xfd, 0x09, 0xb4, 0x4f, 0x25, 0x0f, 0xd1,
-	0x27, 0xc1, 0x3a, 0xb6, 0xa4, 0xfa, 0x07, 0x57, 0x81, 0xcf, 0x60, 0xd7, 0x4e, 0x32, 0xa6, 0x74,
-	0x11, 0xd7, 0xee, 0xfb, 0x14, 0x60, 0x4a, 0x5c, 0x5c, 0x0f, 0x7e, 0x01, 0x77, 0x27, 0xa8, 0x7d,
-	0x12, 0xaf, 0x12, 0x0a, 0xbf, 0x07, 0xc8, 0x15, 0xa5, 0xf5, 0xa6, 0x3f, 0x81, 0xce, 0x04, 0x75,
-	0x81, 0xe3, 0xdc, 0x27, 0xa1, 0x3e, 0x2c, 0xcc, 0x23, 0xb3, 0xb2, 0x7c, 0xeb, 0xa9, 0xaf, 0x72,
-	0x79, 0x0c, 0xcd, 0x4f, 0x4a, 0x73, 0x5d, 0x7f, 0xe9, 0xad, 0x82, 0x5b, 0xd5, 0x04, 0x47, 0xb3,
-	0xea, 0xf9, 0xa7, 0xb4, 0x5c, 0x9f, 0xff, 0x18, 0xc0, 0x27, 0x31, 0xc5, 0xa5, 0x19, 0xbb, 0xd6,
-	0x2e, 0x46, 0x5f, 0xab, 0xa6, 0x2f, 0xc3, 0x70, 0x6d, 0xfa, 0x1c, 0x6e, 0x4f, 0x50, 0x7f, 0x79,
-	0x3f, 0xb6, 0x4f, 0xaa, 0x6a, 0x8e, 0x2b, 0x5a, 0x45, 0xd9, 0xc3, 0x3f, 0x01, 0x00, 0x00, 0xff,
-	0xff, 0x96, 0x99, 0xc4, 0x12, 0x8c, 0x04, 0x00, 0x00,
 }
