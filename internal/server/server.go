@@ -126,7 +126,11 @@ func (s *TorqueHelperSrv) Checknode(ctx context.Context, in *pb.NodeInfoRequest)
 	args = append(args, nid)
 
 	// run checknode to get node information
-	stdout, stderr, ec := sys.ExecCmd("checknode", args)
+	moabHomeDir := os.Getenv("MOABHOMEDIR")
+	if moabHomeDir == "" {
+		moabHomeDir = "/usr/local/moab"
+	}
+	stdout, stderr, ec := sys.ExecCmd(path.Join(moabHomeDir, "bin", "checknode"), args)
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 	return
 }
