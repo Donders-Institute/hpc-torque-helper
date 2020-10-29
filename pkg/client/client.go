@@ -166,9 +166,12 @@ func (c *TorqueHelperSrvClient) GetNodeResourceStatus(nodeID string) ([]NodeReso
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("checknode - ec: %d\n", out.GetExitCode())
+	log.Debugf("checknode - stdout: %s\n", out.GetResponseData())
+	log.Debugf("checknode - stderr: %s\n", out.GetErrorMessage())
 
 	// parsing the out to return node resource
-	return parseChecknodeXML([]byte(out.ResponseData))
+	return parseChecknodeXML([]byte(out.GetResponseData()))
 }
 
 // TorqueHelperMomClient implements client APIs for the TorqueHelperMom service.
