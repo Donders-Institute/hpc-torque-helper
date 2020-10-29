@@ -227,9 +227,9 @@ func validateJobID(id, torqueServer string) (jobFqid string, err error) {
 func validateNodeID(id string) (nodeFqid string, err error) {
 
 	// assuming compute node has hostname with prefix "dccn-c" followed by digits
-	matched, _ := regexp.MatchString(`dccn-c[0-9]+`, nodeFqid)
+	matched, _ := regexp.MatchString(`dccn-c[0-9]+`, id)
 	if !matched {
-		err = fmt.Errorf("invalid compute node: %s", nodeFqid)
+		err = fmt.Errorf("invalid compute node: %s", id)
 		return
 	}
 
