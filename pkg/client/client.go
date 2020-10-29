@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -161,7 +162,7 @@ func (c *TorqueHelperSrvClient) GetNodeResourceStatus(nodeID string) ([]NodeReso
 	md := metadata.Pairs("token", pb.GetSecret())
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
 
-	out, err := client.Checknode(ctx, &pb.NodeInfoRequest{Nid: nodeID, Xml: false})
+	out, err := client.Checknode(ctx, &pb.NodeInfoRequest{Nid: nodeID, Xml: true})
 	if err != nil {
 		return nil, err
 	}
@@ -378,6 +379,9 @@ type NodeResourceStatus struct {
 	AvailDiskGB int
 	TotalGPUS   int
 	AvailGPUS   int
+	NetworkGbps int
+	IsAMD       bool
+	IsIntel     bool
 }
 
 // UnmarshalXML implemented `xml.Unmarshaler` for node resource data.
@@ -390,7 +394,33 @@ func (c *NodeResourceStatus) UnmarshalXML(d *xml.Decoder, start xml.StartElement
 		case "NODESTATE":
 			c.State = attr.Value
 		case "FEATURES":
+			// use node feature tags to get
+			// - memory configuration
+			// - network bandwidth
+			// - CPU vendor
 			c.Features = strings.Split(attr.Value, ",")
+			reMem := regexp.MustCompile(`ram([0-9]+)gb`)
+			for _, f := range c.Features {
+				switch {
+				case f == "network10GigE":
+					c.NetworkGbps = 10
+				case f == "network1GigE":
+					c.NetworkGbps = 1
+				case f == "amd":
+					c.IsAMD = true
+					c.IsIntel = false
+				case f == "intel":
+					c.IsIntel = true
+					c.IsAMD = false
+				case reMem.MatchString(f):
+					m := reMem.FindStringSubmatch(f)
+					sizeGB, err := strconv.Atoi(m[1])
+					if err != nil {
+						return err
+					}
+					c.TotalMemGB = sizeGB
+				}
+			}
 		case "RCPROC":
 			nproc, err := strconv.Atoi(attr.Value)
 			if err != nil {
@@ -415,12 +445,12 @@ func (c *NodeResourceStatus) UnmarshalXML(d *xml.Decoder, start xml.StartElement
 				return err
 			}
 			c.AvailDiskGB = sizeMB / 1024
-		case "RCMEM":
-			sizeMB, err := strconv.Atoi(attr.Value)
-			if err != nil {
-				return err
-			}
-			c.TotalMemGB = sizeMB / 1024
+		// case "RCMEM":
+		// 	sizeMB, err := strconv.Atoi(attr.Value)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	c.TotalMemGB = sizeMB / 1024
 		case "RAMEM":
 			sizeMB, err := strconv.Atoi(attr.Value)
 			if err != nil {
