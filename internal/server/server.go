@@ -150,8 +150,15 @@ func (s *TorqueHelperMom) JobMemInfo(ctx context.Context, in *pb.JobInfoRequest)
 		return
 	}
 
-	stdout, stderr, ec := sys.ExecCmd("cgget",
-		[]string{"-r", "memory.usage_in_bytes", "-r", "memory.max_usage_in_bytes", fmt.Sprintf("torque/%s", jobFqid)})
+	stdout, stderr, ec := sys.ExecCmd(
+		"cgget",
+		[]string{
+			"-r", "memory.usage_in_bytes",
+			"-r", "memory.max_usage_in_bytes",
+			"-r", "memory.limit_in_bytes",
+			fmt.Sprintf("torque/%s", jobFqid),
+		},
+	)
 	out = &pb.GeneralResponse{ExitCode: ec, ResponseData: stdout.String(), ErrorMessage: stderr.String()}
 
 	return
