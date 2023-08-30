@@ -73,6 +73,7 @@ mkdir -p %{buildroot}/usr/lib/systemd/system
 mkdir -p %{buildroot}/etc/sysconfig
 ## install the service binary
 install -m 755 %{gopath}/bin/trqhelpd %{buildroot}/%{_sbindir}/trqhelpd
+install -m 755 %{gopath}/bin/trqacct %{buildroot}/%{_sbindir}/trqacct
 ## install files for trqhelpd_srv service
 install -m 644 scripts/trqhelpd_srv.service %{buildroot}/usr/lib/systemd/system/trqhelpd_srv.service
 install -m 644 scripts/trqhelpd_srv.env %{buildroot}/etc/sysconfig/trqhelpd_srv
@@ -85,6 +86,7 @@ install -m 644 scripts/trqhelpd_acc.env %{buildroot}/etc/sysconfig/trqhelpd_acc
 
 %files server-srv
 %{_sbindir}/trqhelpd
+%{_sbindir}/trqacct
 /usr/lib/systemd/system/trqhelpd_srv.service
 /etc/sysconfig/trqhelpd_srv
 
@@ -143,6 +145,8 @@ rm -f %{_topdir}/SOURCES/%{version}.tar.gz
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Aug 30 2023 Hong Lee <h.lee@donders.ru.nl>
+- added `trqacct` command to the server
 * Fri Sep 28 2018 Hong Lee <h.lee@donders.ru.nl> - 0.7-1
 - added `traceJob` command to the server
 - added `cluster-tracejob` tool to the client

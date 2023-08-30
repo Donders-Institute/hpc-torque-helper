@@ -16,6 +16,7 @@ all: build
 
 build:
 	GOOS=$(GOOS) go build --ldflags $(GOLDFLAGS) -o $(GOPATH)/bin/trqhelpd github.com/Donders-Institute/hpc-torque-helper/cmd/trqhelpd
+	GOOS=$(GOOS) go build --ldflags $(GOLDFLAGS) -o $(GOPATH)/bin/trqacct github.com/Donders-Institute/hpc-torque-helper/cmd/trqacct
 
 doc:
 	@GOOS=$(GOOS) godoc -http=:6060
