@@ -8,6 +8,7 @@ import (
 	"os"
 	"sync"
 
+	pb "github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -63,8 +64,11 @@ func main() {
 	ichan := make(chan string, 2*nworkers)
 	ochan := make(chan JobInfo, 1000*nworkers)
 
-	var wg sync.WaitGroup
+	// channel for monitoring progress
+	pchan := make(chan int)
+	bar := pb.Default(int64(len(logfiles)))
 
+	var wg sync.WaitGroup
 	for i := 0; i < nworkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -73,63 +77,75 @@ func main() {
 				jobs, err := ParseJobLog(f)
 				if err != nil {
 					log.Errorf("[%s] %s", f, err)
-					continue
+				} else {
+					for _, jinfo := range jobs.JobInfo {
+						ochan <- jinfo
+					}
 				}
-				for _, jinfo := range jobs.JobInfo {
-					ochan <- jinfo
-				}
+				pchan <- 1
 			}
 		}()
 	}
 
-	// wait until all workers are finished, close the output channel
+	// wait until all workers are finished, close the output and monitor channel
 	go func() {
 		wg.Wait()
 		close(ochan)
+		close(pchan)
 	}()
 
-	for _, f := range logfiles {
-		ichan <- f
-	}
-	close(ichan)
+	log.Debugf("processing %d log files ...", len(logfiles))
+	go func() {
+		for _, f := range logfiles {
+			ichan <- f
+		}
+		close(ichan)
+	}()
 
 	gaccounts := []Account{}
 	uaccounts := []Account{}
+loop:
+	for {
+		select {
+		case jinfo := <-ochan:
+			log.Debugf("%s: %+v\n", jinfo.ID, jinfo)
 
-	// blocked until output channel is closed
-	for jinfo := range ochan {
+			// group accounting
+			if idx := FindAccount(gaccounts, jinfo.Group); idx == -1 {
+				gaccounts = append(gaccounts, Account{
+					ID:       jinfo.Group,
+					Njobs:    1,
+					Walltime: uint64(jinfo.Used.Walltime),
+					Memory:   uint64(jinfo.Used.Memory),
+				})
+			} else {
+				gaccounts[idx].Njobs += 1
+				gaccounts[idx].Walltime += uint64(jinfo.Used.Walltime)
+				gaccounts[idx].Memory += uint64(jinfo.Requested.Memory)
+			}
 
-		log.Debugf("%s: %+v\n", jinfo.ID, jinfo)
-
-		// group accounting
-		if idx := FindAccount(gaccounts, jinfo.Group); idx == -1 {
-			gaccounts = append(gaccounts, Account{
-				ID:       jinfo.Group,
-				Njobs:    1,
-				Walltime: uint64(jinfo.Used.Walltime),
-				Memory:   uint64(jinfo.Used.Memory),
-			})
-		} else {
-			gaccounts[idx].Njobs += 1
-			gaccounts[idx].Walltime += uint64(jinfo.Used.Walltime)
-			gaccounts[idx].Memory += uint64(jinfo.Requested.Memory)
-		}
-
-		// user accounting
-		if idx := FindAccount(uaccounts, jinfo.User); idx == -1 {
-			uaccounts = append(uaccounts, Account{
-				ID:       jinfo.User,
-				Njobs:    1,
-				Walltime: uint64(jinfo.Used.Walltime),
-				Memory:   uint64(jinfo.Used.Memory),
-			})
-		} else {
-			uaccounts[idx].Njobs += 1
-			uaccounts[idx].Walltime += uint64(jinfo.Used.Walltime)
-			uaccounts[idx].Memory += uint64(jinfo.Requested.Memory)
+			// user accounting
+			if idx := FindAccount(uaccounts, jinfo.User); idx == -1 {
+				uaccounts = append(uaccounts, Account{
+					ID:       jinfo.User,
+					Njobs:    1,
+					Walltime: uint64(jinfo.Used.Walltime),
+					Memory:   uint64(jinfo.Used.Memory),
+				})
+			} else {
+				uaccounts[idx].Njobs += 1
+				uaccounts[idx].Walltime += uint64(jinfo.Used.Walltime)
+				uaccounts[idx].Memory += uint64(jinfo.Requested.Memory)
+			}
+		case p, ok := <-pchan:
+			if !ok {
+				break loop
+			}
+			bar.Add(p)
 		}
 	}
 
+	log.Debugf("producing accounting data ...")
 	f := os.Stdout
 	if *optsOutput != "stdout" {
 		var err error

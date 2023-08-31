@@ -16,17 +16,17 @@ type Account struct {
 }
 
 func (a Account) String() string {
-	return fmt.Sprintf("|%-10s|%12d|%20d|%20d|", a.ID, a.Njobs, a.Walltime, a.Memory)
+	return fmt.Sprintf("|%-12s|%12d|%20d|%20d|", a.ID, a.Njobs, a.Walltime, a.Memory)
 }
 
 func AccountTabletHeader() string {
 	return AccountTabletSeparator() +
-		fmt.Sprintf("\n|%-10s|%12s|%20s|%20s|\n", "ID", "jobs", "used walltime", "requested memory") +
+		fmt.Sprintf("\n|%-12s|%12s|%20s|%20s|\n", "ID", "jobs", "used walltime", "requested memory") +
 		AccountTabletSeparator()
 }
 
 func AccountTabletSeparator() string {
-	return fmt.Sprint("+" + strings.Repeat("=", 65) + "+")
+	return fmt.Sprint("+" + strings.Repeat("=", 67) + "+")
 }
 
 // FindAccount finds the account registry with given `id`.
